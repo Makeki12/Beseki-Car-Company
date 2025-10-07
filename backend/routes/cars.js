@@ -1,5 +1,5 @@
 const express = require("express");
-const Car = require("../models/Car");
+const Car = require("../models/car");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const { cloudinary } = require("../utils/cloudinary");
