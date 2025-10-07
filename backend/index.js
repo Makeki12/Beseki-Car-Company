@@ -25,7 +25,7 @@ mongoose
 // -------------------- IMPORT ROUTES --------------------
 const carsRouter = require("./routes/cars");
 const bookingsRouter = require("./routes/bookings");
-const notificationsRouter = require("./routes/Notifications");
+const notificationsRouter = require("./routes/notifications");
 const adminRouter = require("./routes/admin");
 const authRouter = require("./routes/authRoutes"); // ✅ Authentication routes
 
