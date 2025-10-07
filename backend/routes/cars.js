@@ -1,9 +1,8 @@
 const express = require("express");
 const Car = require("../models/Car");
 const multer = require("multer");
-const path = require("path");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
+const { cloudinary } = require("../utils/cloudinary");
 
 const router = express.Router();
 
@@ -21,34 +20,22 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// 📂 Multer storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // save in uploads folder
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname); // unique filename
-  },
-});
-
+// 📦 Multer setup (store in memory since Cloudinary handles storage)
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only JPEG/PNG images are allowed"));
-    }
+    if (mimetype) cb(null, true);
+    else cb(new Error("Only JPEG/PNG images are allowed"));
   },
 });
 
 // 📌 Public route: Get all cars
 router.get("/", async (req, res) => {
   try {
-    const cars = await Car.find();
+    const cars = await Car.find().sort({ createdAt: -1 });
     res.json(cars);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cars" });
@@ -67,20 +54,36 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// 📌 Admin-only: Add car (multiple images)
+// 📌 Admin-only: Add car (upload to Cloudinary)
 router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => {
   try {
-    if (!req.files || req.files.length === 0) {
+    if (!req.files || req.files.length === 0)
       return res.status(400).json({ error: "At least one image is required" });
-    }
 
-    const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
+    const uploadPromises = req.files.map((file) => {
+      return new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "beseki_cars" },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve({
+                url: result.secure_url,
+                public_id: result.public_id,
+              });
+            }
+          )
+          .end(file.buffer);
+      });
+    });
+
+    const uploadedImages = await Promise.all(uploadPromises);
 
     const car = new Car({
       name: req.body.name,
       price: req.body.price,
       description: req.body.description,
-      images: imagePaths, // ✅ store multiple paths
+      images: uploadedImages, // ✅ Store { url, public_id }
     });
 
     await car.save();
@@ -91,44 +94,57 @@ router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => 
   }
 });
 
-// 📌 Admin-only: Update car (details + add/remove images)
+// 📌 Admin-only: Update car
 router.put("/:id", authMiddleware, upload.array("images", 5), async (req, res) => {
   try {
     const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ error: "Car not found" });
 
-    // ✅ Update text fields
-    if (req.body.name) car.name = req.body.name;
-    if (req.body.price) car.price = req.body.price;
-    if (req.body.description) car.description = req.body.description;
+    // Update text fields
+    car.name = req.body.name || car.name;
+    car.price = req.body.price || car.price;
+    car.description = req.body.description || car.description;
 
-    // ✅ Handle new uploaded images
+    // Handle new images
     if (req.files && req.files.length > 0) {
-      const newImagePaths = req.files.map((file) => `/uploads/${file.filename}`);
-      car.images.push(...newImagePaths);
+      const uploadPromises = req.files.map((file) => {
+        return new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              { folder: "beseki_cars" },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve({
+                  url: result.secure_url,
+                  public_id: result.public_id,
+                });
+              }
+            )
+            .end(file.buffer);
+        });
+      });
+
+      const uploadedImages = await Promise.all(uploadPromises);
+      car.images.push(...uploadedImages);
     }
 
-    // ✅ Handle image deletion (expects array of image URLs in req.body.removeImages)
+    // Handle image deletion (expects array of public_ids)
     if (req.body.removeImages) {
       let removeList = [];
       try {
-        removeList = JSON.parse(req.body.removeImages); // stringified array from frontend
+        removeList = JSON.parse(req.body.removeImages);
       } catch {
         removeList = Array.isArray(req.body.removeImages) ? req.body.removeImages : [];
       }
 
       if (removeList.length > 0) {
-        car.images = car.images.filter((img) => !removeList.includes(img));
+        // Delete from Cloudinary
+        for (const public_id of removeList) {
+          await cloudinary.uploader.destroy(public_id);
+        }
 
-        // Optionally delete the files physically
-        removeList.forEach((imgPath) => {
-          const fullPath = path.join(__dirname, "..", imgPath);
-          if (fs.existsSync(fullPath)) {
-            fs.unlink(fullPath, (err) => {
-              if (err) console.error("Failed to delete file:", err);
-            });
-          }
-        });
+        // Remove from DB
+        car.images = car.images.filter((img) => !removeList.includes(img.public_id));
       }
     }
 
@@ -140,25 +156,21 @@ router.put("/:id", authMiddleware, upload.array("images", 5), async (req, res) =
   }
 });
 
-// 📌 Admin-only: Delete car (and its images)
+// 📌 Admin-only: Delete car + Cloudinary images
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ error: "Car not found" });
 
-    // Delete images from filesystem
-    car.images.forEach((imgPath) => {
-      const fullPath = path.join(__dirname, "..", imgPath);
-      if (fs.existsSync(fullPath)) {
-        fs.unlink(fullPath, (err) => {
-          if (err) console.error("Failed to delete file:", err);
-        });
-      }
-    });
+    // Delete all images from Cloudinary
+    for (const img of car.images) {
+      await cloudinary.uploader.destroy(img.public_id);
+    }
 
     await Car.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: "Car deleted" });
+    res.json({ success: true, message: "Car and its images deleted" });
   } catch (err) {
+    console.error("Error deleting car:", err);
     res.status(500).json({ error: err.message });
   }
 });
