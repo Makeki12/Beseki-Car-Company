@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const Booking = require("../models/Booking");
-const Car = require("../models/Car");
+const Booking = require("../models/booking");
+const Car = require("../models/car");
 
 // 📌 POST: Book a test drive
 router.post("/", async (req, res) => {
