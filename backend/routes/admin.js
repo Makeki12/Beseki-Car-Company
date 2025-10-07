@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Car = require('../models/Car');
+const Car = require('../models/car');
 const Notification = require('../models/Notification');
 
 // Dummy middleware for admin check
