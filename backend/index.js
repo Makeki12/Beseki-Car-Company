@@ -4,9 +4,11 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 
+console.log("🔍 Starting server with route isolation...");
+
 const app = express();
 
-// -------------------- MIDDLEWARE --------------------
+// -------------------- BASIC MIDDLEWARE --------------------
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -20,24 +22,71 @@ mongoose
   .then(() => console.log("✅ MongoDB connected successfully"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// -------------------- IMPORT ROUTES --------------------
-const carsRouter = require("./routes/cars");
-const bookingsRouter = require("./routes/bookings");
-const notificationsRouter = require("./routes/notifications");
-const adminRouter = require("./routes/admin");
-const authRouter = require("./routes/authRoutes");
-
-// -------------------- USE ROUTES --------------------
-app.use("/api/cars", carsRouter);
-app.use("/api/bookings", bookingsRouter);
-app.use("/api/notifications", notificationsRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/auth", authRouter);
-
 // -------------------- DEFAULT ROUTE --------------------
 app.get("/", (req, res) => {
   res.send("🚗 Beseki Car Showroom Backend is running...");
 });
+
+console.log("✅ Basic setup complete");
+
+// -------------------- ISOLATE ROUTES ONE BY ONE --------------------
+
+// Test 1: Just the basic app without any routes
+console.log("🧪 TEST 1: Basic app without custom routes...");
+// Don't load any routes yet - if this works, the issue is in routes
+
+// Test 2: Try each route file individually
+try {
+  console.log("\n🧪 TEST 2: Loading CARS routes...");
+  const carsRouter = require("./routes/cars");
+  app.use("/api/cars", carsRouter);
+  console.log("✅ Cars routes loaded successfully");
+} catch (error) {
+  console.error("💥 CARS ROUTES FAILED:", error.message);
+  process.exit(1);
+}
+
+try {
+  console.log("🧪 TEST 3: Loading BOOKINGS routes...");
+  const bookingsRouter = require("./routes/bookings");
+  app.use("/api/bookings", bookingsRouter);
+  console.log("✅ Bookings routes loaded successfully");
+} catch (error) {
+  console.error("💥 BOOKINGS ROUTES FAILED:", error.message);
+  process.exit(1);
+}
+
+try {
+  console.log("🧪 TEST 4: Loading NOTIFICATIONS routes...");
+  const notificationsRouter = require("./routes/notifications");
+  app.use("/api/notifications", notificationsRouter);
+  console.log("✅ Notifications routes loaded successfully");
+} catch (error) {
+  console.error("💥 NOTIFICATIONS ROUTES FAILED:", error.message);
+  process.exit(1);
+}
+
+try {
+  console.log("🧪 TEST 5: Loading ADMIN routes...");
+  const adminRouter = require("./routes/admin");
+  app.use("/api/admin", adminRouter);
+  console.log("✅ Admin routes loaded successfully");
+} catch (error) {
+  console.error("💥 ADMIN ROUTES FAILED:", error.message);
+  process.exit(1);
+}
+
+try {
+  console.log("🧪 TEST 6: Loading AUTH routes...");
+  const authRouter = require("./routes/authRoutes");
+  app.use("/api/auth", authRouter);
+  console.log("✅ Auth routes loaded successfully");
+} catch (error) {
+  console.error("💥 AUTH ROUTES FAILED:", error.message);
+  process.exit(1);
+}
+
+console.log("🎉 All routes loaded successfully!");
 
 // -------------------- DEPLOYMENT SETUP --------------------
 if (process.env.NODE_ENV === "production") {
@@ -50,7 +99,5 @@ if (process.env.NODE_ENV === "production") {
 // -------------------- START SERVER --------------------
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(
-    `🚀 Server running in ${process.env.NODE_ENV || "development"} mode on port ${PORT}`
-  );
+  console.log(`🚀 Server running on port ${PORT}`);
 });
