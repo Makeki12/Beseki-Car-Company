@@ -4,13 +4,17 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 function CarDetails() {
   const { id } = useParams();
   const [car, setCar] = useState(null);
-  const [fullscreenIndex, setFullscreenIndex] = useState(null); 
+  const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
+
+  // ✅ Use your Render backend domain here
+  const API_BASE =
+    import.meta.env.VITE_API_URL || "https://beseki-backend.onrender.com";
 
   useEffect(() => {
     async function fetchCar() {
       try {
-        const res = await fetch(`http://localhost:5000/api/cars/${id}`);
+        const res = await fetch(`${API_BASE}/api/cars/${id}`);
         if (!res.ok) throw new Error("Failed to fetch car");
         const data = await res.json();
         setCar(data);
@@ -19,7 +23,7 @@ function CarDetails() {
       }
     }
     fetchCar();
-  }, [id]);
+  }, [id, API_BASE]);
 
   if (!car) {
     return (
@@ -43,7 +47,9 @@ function CarDetails() {
 
   const handlePrev = () => {
     if (car.images && fullscreenIndex !== null) {
-      setFullscreenIndex((prev) => (prev - 1 + car.images.length) % car.images.length);
+      setFullscreenIndex(
+        (prev) => (prev - 1 + car.images.length) % car.images.length
+      );
     }
   };
 
@@ -64,11 +70,13 @@ function CarDetails() {
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         {/* ✅ Image Gallery */}
         {car.images && car.images.length > 0 ? (
-          <div style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px" }}>
+          <div
+            style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px" }}
+          >
             {car.images.map((img, idx) => (
               <img
                 key={idx}
-                src={`http://localhost:5000${img}`}
+                src={`${API_BASE}${img}`}
                 alt={`${car.name} ${idx}`}
                 style={{
                   width: "180px",
@@ -88,7 +96,7 @@ function CarDetails() {
         {/* ✅ Car Info */}
         <div style={{ flex: "1", minWidth: "250px" }}>
           <p style={{ fontSize: "18px" }}>
-            <strong>💲 Price:</strong> Ksh{""}
+            <strong>💲 Price:</strong> Ksh{" "}
             {Number(car.price).toLocaleString()}
           </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
@@ -161,7 +169,7 @@ function CarDetails() {
 
           {/* Image */}
           <img
-            src={`http://localhost:5000${car.images[fullscreenIndex]}`}
+            src={`${API_BASE}${car.images[fullscreenIndex]}`}
             alt="fullscreen"
             style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: "10px" }}
           />

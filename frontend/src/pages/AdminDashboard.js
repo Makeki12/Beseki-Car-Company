@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+// ✅ Dynamic API base URL (auto switch between localhost & Render)
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://your-render-backend-name.onrender.com"
+    : "http://localhost:5000";
+
 // ---------- Helper functions ----------
 async function fetchCarsData(setCars) {
   try {
-    const res = await fetch("http://localhost:5000/api/cars");
+    const res = await fetch(`${API_BASE_URL}/api/cars`);
     const data = await res.json();
     setCars(data);
   } catch (error) {
@@ -14,7 +20,7 @@ async function fetchCarsData(setCars) {
 
 async function fetchBookingsData(setBookings, token) {
   try {
-    const res = await fetch("http://localhost:5000/api/bookings", {
+    const res = await fetch(`${API_BASE_URL}/api/bookings`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error("Failed to fetch bookings");
@@ -79,8 +85,8 @@ export default function AdminDashboard() {
 
     try {
       const url = editCarId
-        ? `http://localhost:5000/api/cars/${editCarId}`
-        : "http://localhost:5000/api/cars";
+        ? `${API_BASE_URL}/api/cars/${editCarId}`
+        : `${API_BASE_URL}/api/cars`;
       const method = editCarId ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -106,7 +112,7 @@ export default function AdminDashboard() {
 
   async function handleDeleteCar(id) {
     try {
-      const res = await fetch(`http://localhost:5000/api/cars/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/cars/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -124,7 +130,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this booking?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -143,7 +149,7 @@ export default function AdminDashboard() {
   async function handleDeleteImage(carId, index) {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/cars/${carId}/images/${index}`,
+        `${API_BASE_URL}/api/cars/${carId}/images/${index}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -286,7 +292,7 @@ export default function AdminDashboard() {
         )}
       </form>
 
-      {/* Cars */}
+      {/* Cars Section */}
       <h3>Cars in Showroom</h3>
       {cars.length === 0 ? (
         <p>No cars available.</p>
@@ -309,14 +315,13 @@ export default function AdminDashboard() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>
-                {car.name}
-              </h4>
+              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>{car.name}</h4>
               <p>
                 <strong>Price:</strong> Ksh{" "}
                 {Number(car.price).toLocaleString("en-KE")}
               </p>
               <p style={{ fontSize: "0.9em" }}>{car.description}</p>
+
               {car.images?.length > 0 && (
                 <div
                   style={{
@@ -329,7 +334,7 @@ export default function AdminDashboard() {
                   {car.images.map((img, idx) => (
                     <div key={idx} style={{ position: "relative" }}>
                       <img
-                        src={`http://localhost:5000${img}`}
+                        src={`${API_BASE_URL}${img}`}
                         alt={`${car.name} ${idx}`}
                         width="100%"
                         style={{
@@ -395,7 +400,6 @@ export default function AdminDashboard() {
       {/* ---------- Bookings ---------- */}
       <h3 style={{ marginTop: "40px" }}>Test Drive Bookings</h3>
 
-      {/* 🔍 Search Bar */}
       <input
         type="text"
         placeholder="Search by car, name, email, or phone..."
@@ -431,9 +435,7 @@ export default function AdminDashboard() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>
-                {booking.name}
-              </h4>
+              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>{booking.name}</h4>
               <p>
                 <strong>Email:</strong> {booking.email}
               </p>
@@ -455,7 +457,7 @@ export default function AdminDashboard() {
               </p>
               {booking.car?.images?.[0] && (
                 <img
-                  src={`http://localhost:5000${booking.car.images[0]}`}
+                  src={`${API_BASE_URL}${booking.car.images[0]}`}
                   alt={booking.car.name}
                   width="100%"
                   style={{
@@ -517,7 +519,6 @@ export default function AdminDashboard() {
                 </a>
               </div>
 
-              {/* 🗑 Delete Booking */}
               <button
                 onClick={() => handleDeleteBooking(booking._id)}
                 style={{

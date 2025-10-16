@@ -7,9 +7,20 @@ const path = require("path");
 const app = express();
 
 // -------------------- MIDDLEWARE --------------------
-app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
+
+// ✅ CORS Configuration
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000", // for local dev
+      "https://beseki-cars.vercel.app", // ✅ your deployed frontend on Vercel
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
 // -------------------- DATABASE CONNECTION --------------------
 mongoose
@@ -44,7 +55,7 @@ if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/build");
   app.use(express.static(frontendPath));
 
-  // ✅ FIX: Use regex instead of '/*' or '*'
+  // ✅ Fix: Use regex for all frontend routes
   app.get(/.*/, (req, res) => {
     res.sendFile(path.resolve(frontendPath, "index.html"));
   });
