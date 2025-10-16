@@ -41,12 +41,12 @@ app.get("/", (req, res) => {
 
 // -------------------- DEPLOYMENT SETUP --------------------
 if (process.env.NODE_ENV === "production") {
-  // Serve frontend build files
-  app.use(express.static(path.join(__dirname, "../frontend/build")));
+  const frontendPath = path.join(__dirname, "../frontend/build");
+  app.use(express.static(frontendPath));
 
-  // FIXED: Express 5+ no longer supports '*' wildcard directly
-  app.get("/*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../frontend/build", "index.html"));
+  // ✅ FIX: Use regex instead of '/*' or '*'
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.resolve(frontendPath, "index.html"));
   });
 }
 
