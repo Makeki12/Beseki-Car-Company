@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 // ✅ Dynamic API base URL (auto switch between localhost & Render)
 const API_BASE_URL =
   process.env.NODE_ENV === "production"
-    ? "https://your-render-backend-name.onrender.com"
+    ? "https://beseki-car-company.onrender.com"
     : "http://localhost:5000";
 
 // ---------- Helper functions ----------
