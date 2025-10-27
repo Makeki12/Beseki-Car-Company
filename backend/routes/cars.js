@@ -2,13 +2,13 @@ const express = require("express");
 const Car = require("../models/car");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
-const { cloudinary } = require("../utils/cloudinary");
+const cloudinary = require("../utils/cloudinary"); // ✅ fixed import
 
 const router = express.Router();
 
 // 🔒 Middleware to check admin token
 function authMiddleware(req, res, next) {
-  const token = req.headers["authorization"]?.split(" ")[1]; // Expect: "Bearer <token>"
+  const token = req.headers.authorization?.split(" ")[1]; // Expect "Bearer <token>"
   if (!token) return res.status(401).json({ error: "No token provided" });
 
   try {
@@ -20,7 +20,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// 📦 Multer setup (store in memory since Cloudinary handles storage)
+// 📦 Multer setup (store in memory for Cloudinary)
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -49,33 +49,32 @@ router.get("/:id", async (req, res) => {
     if (!car) return res.status(404).json({ message: "Car not found" });
     res.json(car);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 📌 Admin-only: Add car (upload to Cloudinary)
+// 📌 Admin-only: Add car
 router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => {
   try {
-    if (!req.files || req.files.length === 0)
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "At least one image is required" });
+    }
 
-    const uploadPromises = req.files.map((file) => {
-      return new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
+    const uploadPromises = req.files.map(
+      (file) =>
+        new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
             { folder: "beseki_cars" },
             (error, result) => {
               if (error) reject(error);
-              else resolve({
-                url: result.secure_url,
-                public_id: result.public_id,
-              });
+              else if (result)
+                resolve({ url: result.secure_url, public_id: result.public_id });
+              else reject(new Error("Cloudinary upload failed"));
             }
-          )
-          .end(file.buffer);
-      });
-    });
+          );
+          uploadStream.end(file.buffer);
+        })
+    );
 
     const uploadedImages = await Promise.all(uploadPromises);
 
@@ -83,13 +82,13 @@ router.post("/", authMiddleware, upload.array("images", 5), async (req, res) => 
       name: req.body.name,
       price: req.body.price,
       description: req.body.description,
-      images: uploadedImages, // ✅ Store { url, public_id }
+      images: uploadedImages,
     });
 
     await car.save();
-    res.json({ success: true, car });
+    res.status(201).json({ success: true, car });
   } catch (err) {
-    console.error("Error adding car:", err);
+    console.error("❌ Error adding car:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -105,45 +104,39 @@ router.put("/:id", authMiddleware, upload.array("images", 5), async (req, res) =
     car.price = req.body.price || car.price;
     car.description = req.body.description || car.description;
 
-    // Handle new images
+    // Upload new images
     if (req.files && req.files.length > 0) {
-      const uploadPromises = req.files.map((file) => {
-        return new Promise((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream(
+      const uploadPromises = req.files.map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
               { folder: "beseki_cars" },
               (error, result) => {
                 if (error) reject(error);
-                else resolve({
-                  url: result.secure_url,
-                  public_id: result.public_id,
-                });
+                else if (result)
+                  resolve({ url: result.secure_url, public_id: result.public_id });
               }
-            )
-            .end(file.buffer);
-        });
-      });
+            );
+            uploadStream.end(file.buffer);
+          })
+      );
 
       const uploadedImages = await Promise.all(uploadPromises);
       car.images.push(...uploadedImages);
     }
 
-    // Handle image deletion (expects array of public_ids)
+    // Remove selected images
     if (req.body.removeImages) {
       let removeList = [];
       try {
         removeList = JSON.parse(req.body.removeImages);
       } catch {
-        removeList = Array.isArray(req.body.removeImages) ? req.body.removeImages : [];
+        if (Array.isArray(req.body.removeImages))
+          removeList = req.body.removeImages;
       }
 
       if (removeList.length > 0) {
-        // Delete from Cloudinary
-        for (const public_id of removeList) {
-          await cloudinary.uploader.destroy(public_id);
-        }
-
-        // Remove from DB
+        await Promise.all(removeList.map((id) => cloudinary.uploader.destroy(id)));
         car.images = car.images.filter((img) => !removeList.includes(img.public_id));
       }
     }
@@ -151,26 +144,26 @@ router.put("/:id", authMiddleware, upload.array("images", 5), async (req, res) =
     await car.save();
     res.json({ success: true, car });
   } catch (err) {
-    console.error("Error updating car:", err);
+    console.error("❌ Error updating car:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 📌 Admin-only: Delete car + Cloudinary images
+// 📌 Admin-only: Delete car
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const car = await Car.findById(req.params.id);
     if (!car) return res.status(404).json({ error: "Car not found" });
 
-    // Delete all images from Cloudinary
-    for (const img of car.images) {
-      await cloudinary.uploader.destroy(img.public_id);
-    }
+    // Delete all Cloudinary images
+    await Promise.all(
+      car.images.map((img) => cloudinary.uploader.destroy(img.public_id))
+    );
 
-    await Car.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: "Car and its images deleted" });
+    await car.deleteOne();
+    res.json({ success: true, message: "Car and its images deleted successfully" });
   } catch (err) {
-    console.error("Error deleting car:", err);
+    console.error("❌ Error deleting car:", err);
     res.status(500).json({ error: err.message });
   }
 });
