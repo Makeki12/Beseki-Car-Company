@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ✅ Detect backend dynamically (Render in production, localhost in dev)
+// ✅ Dynamic API base URL (auto switch between localhost & Render)
 const API_BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://beseki-car-company.onrender.com"
     : "http://localhost:5000";
 
-// ------------------- Helper Fetch Functions -------------------
+// ---------- Helper functions ----------
 async function fetchCarsData(setCars) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/cars`);
     const data = await res.json();
     setCars(data);
   } catch (error) {
-    console.error("❌ Error fetching cars:", error);
+    console.error("Error fetching cars:", error);
   }
 }
 
@@ -27,11 +27,10 @@ async function fetchBookingsData(setBookings, token) {
     const data = await res.json();
     setBookings(data);
   } catch (error) {
-    console.error("❌ Error fetching bookings:", error);
+    console.error("Error fetching bookings:", error);
   }
 }
 
-// ------------------- Component -------------------
 export default function AdminDashboard() {
   const [cars, setCars] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -44,37 +43,40 @@ export default function AdminDashboard() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  // ✅ Fetch data when component mounts
+  // ✅ Fetch data once on mount
   useEffect(() => {
     fetchCarsData(setCars);
     fetchBookingsData(setBookings, token);
   }, [token]);
 
-  // ✅ Filter bookings dynamically
+  // ✅ Sync filteredBookings with bookings and searchTerm
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = bookings.filter(
       (b) =>
-        b.name?.toLowerCase().includes(term) ||
-        b.email?.toLowerCase().includes(term) ||
-        b.phone?.toLowerCase().includes(term) ||
+        b.name.toLowerCase().includes(term) ||
+        b.email.toLowerCase().includes(term) ||
+        b.phone.toLowerCase().includes(term) ||
         b.car?.name?.toLowerCase().includes(term)
     );
     setFilteredBookings(filtered);
   }, [bookings, searchTerm]);
 
-  // ------------------- Form Handlers -------------------
-  const handleChange = (e) =>
+  // ---------- Handlers ----------
+  function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+  }
 
-  const handleImageChange = (e) => {
+  function handleImageChange(e) {
     const files = Array.from(e.target.files);
     setImages(files);
-    setPreview(files.map((file) => URL.createObjectURL(file)));
-  };
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setPreview(previews);
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
+
     const formData = new FormData();
     formData.append("name", form.name);
     formData.append("price", form.price);
@@ -94,7 +96,6 @@ export default function AdminDashboard() {
       });
 
       if (res.ok) {
-        alert(editCarId ? "✅ Car updated successfully!" : "✅ Car added!");
         setForm({ name: "", price: "", description: "" });
         setImages([]);
         setPreview([]);
@@ -102,58 +103,93 @@ export default function AdminDashboard() {
         fetchCarsData(setCars);
       } else {
         const err = await res.json();
-        alert("❌ Error: " + (err.error || "Unknown error"));
+        alert("Error: " + (err.error || "Unknown error"));
       }
     } catch (error) {
-      console.error("❌ Error submitting car:", error);
-      alert("Failed to connect to the server.");
+      console.error("Error submitting car:", error);
     }
-  };
+  }
 
-  const handleEditCar = (car) => {
-    setEditCarId(car._id);
-    setForm({
-      name: car.name,
-      price: car.price,
-      description: car.description,
-    });
-    setPreview(
-      car.images?.map((img) => `${API_BASE_URL}${img}`) || []
-    );
-  };
-
-  const handleDeleteCar = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this car?")) return;
+  async function handleDeleteCar(id) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/cars/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        fetchCarsData(setCars);
-      } else {
+      if (res.ok) fetchCarsData(setCars);
+      else {
         const err = await res.json();
         alert("Error deleting car: " + (err.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error deleting car:", error);
     }
-  };
+  }
 
-  const handleCancelEdit = () => {
+  async function handleDeleteBooking(id) {
+    if (!window.confirm("Are you sure you want to delete this booking?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setBookings((prev) => prev.filter((b) => b._id !== id));
+      } else {
+        const err = await res.json();
+        alert("Error deleting booking: " + (err.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+    }
+  }
+
+  async function handleDeleteImage(carId, index) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/cars/${carId}/images/${index}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.ok) fetchCarsData(setCars);
+      else {
+        const err = await res.json();
+        alert("Error deleting image: " + (err.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    }
+  }
+
+  function handleEditCar(car) {
+    setEditCarId(car._id);
+    setForm({
+      name: car.name,
+      price: car.price,
+      description: car.description,
+    });
+    setImages([]);
+    setPreview([]);
+  }
+
+  function handleCancelEdit() {
     setEditCarId(null);
     setForm({ name: "", price: "", description: "" });
     setImages([]);
     setPreview([]);
-  };
+  }
 
-  const handleLogout = () => {
+  function handleLogout() {
     localStorage.removeItem("token");
     navigate("/");
     window.location.reload();
-  };
+  }
 
-  // ------------------- UI -------------------
+  // ---------- UI ----------
   return (
     <div style={{ maxWidth: "1100px", margin: "20px auto", padding: "20px" }}>
       <h2 style={{ textAlign: "center" }}>Admin Dashboard</h2>
@@ -173,7 +209,7 @@ export default function AdminDashboard() {
         Logout
       </button>
 
-      {/* ------------ Add/Edit Car Form ------------ */}
+      {/* Add/Edit Car Form */}
       <form
         onSubmit={handleSubmit}
         style={{
@@ -209,14 +245,8 @@ export default function AdminDashboard() {
           onChange={handleChange}
           rows="3"
         />
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleImageChange}
-        />
+        <input type="file" accept="image/*" multiple onChange={handleImageChange} />
 
-        {/* Preview newly added or existing images */}
         {preview.length > 0 && (
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {preview.map((src, idx) => (
@@ -262,7 +292,7 @@ export default function AdminDashboard() {
         )}
       </form>
 
-      {/* ------------ Cars Display Section ------------ */}
+      {/* Cars Section */}
       <h3>Cars in Showroom</h3>
       {cars.length === 0 ? (
         <p>No cars available.</p>
@@ -285,9 +315,7 @@ export default function AdminDashboard() {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>
-                {car.name}
-              </h4>
+              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>{car.name}</h4>
               <p>
                 <strong>Price:</strong> Ksh{" "}
                 {Number(car.price).toLocaleString("en-KE")}
@@ -304,17 +332,35 @@ export default function AdminDashboard() {
                   }}
                 >
                   {car.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={`${API_BASE_URL}${img}`}
-                      alt={car.name}
-                      width="100%"
-                      style={{
-                        borderRadius: "8px",
-                        maxHeight: "150px",
-                        objectFit: "cover",
-                      }}
-                    />
+                    <div key={idx} style={{ position: "relative" }}>
+                      <img
+                        src={`${API_BASE_URL}${img}`}
+                        alt={`${car.name} ${idx}`}
+                        width="100%"
+                        style={{
+                          borderRadius: "8px",
+                          maxHeight: "150px",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <button
+                        onClick={() => handleDeleteImage(car._id, idx)}
+                        style={{
+                          position: "absolute",
+                          top: "5px",
+                          right: "5px",
+                          background: "rgba(255,0,0,0.8)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "22px",
+                          height: "22px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -346,6 +392,148 @@ export default function AdminDashboard() {
                   Delete
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ---------- Bookings ---------- */}
+      <h3 style={{ marginTop: "40px" }}>Test Drive Bookings</h3>
+
+      <input
+        type="text"
+        placeholder="Search by car, name, email, or phone..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "20px",
+          border: "1px solid #ccc",
+          borderRadius: "5px",
+        }}
+      />
+
+      {filteredBookings.length === 0 ? (
+        <p>No matching bookings found.</p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "20px",
+          }}
+        >
+          {filteredBookings.map((booking) => (
+            <div
+              key={booking._id}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: "10px",
+                padding: "15px",
+                background: "#f9f9f9",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>{booking.name}</h4>
+              <p>
+                <strong>Email:</strong> {booking.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {booking.phone}
+              </p>
+              <p>
+                <strong>Date:</strong>{" "}
+                {booking.preferredDate
+                  ? new Date(booking.preferredDate).toLocaleDateString()
+                  : "N/A"}
+              </p>
+              <h5>{booking.car?.name || "Car unavailable"}</h5>
+              <p>
+                <strong>Price:</strong>{" "}
+                {booking.car?.price
+                  ? `Ksh ${Number(booking.car.price).toLocaleString()}`
+                  : "N/A"}
+              </p>
+              {booking.car?.images?.[0] && (
+                <img
+                  src={`${API_BASE_URL}${booking.car.images[0]}`}
+                  alt={booking.car.name}
+                  width="100%"
+                  style={{
+                    borderRadius: "8px",
+                    marginTop: "5px",
+                    objectFit: "cover",
+                  }}
+                />
+              )}
+              {booking.message && (
+                <p
+                  style={{
+                    marginTop: "10px",
+                    fontStyle: "italic",
+                    background: "#eef3ff",
+                    padding: "8px",
+                    borderRadius: "5px",
+                  }}
+                >
+                  “{booking.message}”
+                </p>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "15px",
+                }}
+              >
+                <a
+                  href={`mailto:${booking.email}`}
+                  style={{
+                    background: "#1976d2",
+                    color: "#fff",
+                    padding: "8px 12px",
+                    borderRadius: "5px",
+                    textDecoration: "none",
+                    textAlign: "center",
+                    flex: 1,
+                    marginRight: "8px",
+                  }}
+                >
+                  Email
+                </a>
+                <a
+                  href={`tel:${booking.phone}`}
+                  style={{
+                    background: "#43a047",
+                    color: "#fff",
+                    padding: "8px 12px",
+                    borderRadius: "5px",
+                    textDecoration: "none",
+                    textAlign: "center",
+                    flex: 1,
+                  }}
+                >
+                  Call
+                </a>
+              </div>
+
+              <button
+                onClick={() => handleDeleteBooking(booking._id)}
+                style={{
+                  marginTop: "10px",
+                  width: "100%",
+                  background: "red",
+                  color: "white",
+                  padding: "8px",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Delete Booking
+              </button>
             </div>
           ))}
         </div>
