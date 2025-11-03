@@ -146,7 +146,7 @@ function FeaturedCars() {
                 </p>
 
                 <Link
-                  to={`/car/${car._id}`}
+                  to={`/car/${car.id || car._id}`}
                   style={{
                     display: "inline-block",
                     padding: "10px 18px",
