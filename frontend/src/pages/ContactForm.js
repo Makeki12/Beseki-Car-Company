@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function BookTestDrive() {
+  const location = useLocation();
+  const preselectedCarName = location.state?.carName || "";
+  const preselectedCarId = location.state?.carId || "";
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
-    carId: "", // ✅ matches backend field
-    preferredDate: "", // ✅ matches backend field
+    carId: preselectedCarId,
+    preferredDate: "",
     message: "",
   });
 
   const [cars, setCars] = useState([]);
   const [status, setStatus] = useState(null);
 
-  // ✅ Use your live backend URL from environment variable
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://beseki-backend.onrender.com";
 
-  // ✅ Fetch available cars from backend
   useEffect(() => {
     fetch(`${API_BASE}/api/cars`)
       .then((res) => {
@@ -31,12 +34,10 @@ export default function BookTestDrive() {
       });
   }, [API_BASE]);
 
-  // ✅ Handle form input changes
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  // ✅ Handle booking submission
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus(null);
@@ -86,7 +87,6 @@ export default function BookTestDrive() {
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: "12px" }}
       >
-        {/* Name */}
         <input
           name="name"
           placeholder="Full Name"
@@ -96,7 +96,6 @@ export default function BookTestDrive() {
           style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
 
-        {/* Email */}
         <input
           name="email"
           type="email"
@@ -107,7 +106,6 @@ export default function BookTestDrive() {
           style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
 
-        {/* Phone */}
         <input
           name="phone"
           placeholder="Phone"
@@ -117,7 +115,6 @@ export default function BookTestDrive() {
           style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
 
-        {/* ✅ Car dropdown from backend */}
         <select
           name="carId"
           value={form.carId}
@@ -133,7 +130,6 @@ export default function BookTestDrive() {
           ))}
         </select>
 
-        {/* Preferred Date */}
         <input
           name="preferredDate"
           type="date"
@@ -143,7 +139,6 @@ export default function BookTestDrive() {
           style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
 
-        {/* Optional Message */}
         <textarea
           name="message"
           placeholder="Additional Message"
@@ -157,7 +152,6 @@ export default function BookTestDrive() {
           }}
         />
 
-        {/* Submit Button */}
         <button
           type="submit"
           style={{
@@ -174,7 +168,6 @@ export default function BookTestDrive() {
         </button>
       </form>
 
-      {/* ✅ Status message */}
       {status && (
         <p
           style={{

@@ -7,9 +7,12 @@ function CarDetails() {
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Use your Render backend domain here
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://beseki-backend.onrender.com";
+
+  // ✅ Helper to handle both full and relative URLs
+  const getImageUrl = (img) =>
+    img.startsWith("http") ? img : `${API_BASE}${img}`;
 
   useEffect(() => {
     async function fetchCar() {
@@ -33,12 +36,10 @@ function CarDetails() {
     );
   }
 
-  // ✅ Auto-fill car model in booking form
   const handleBookTestDrive = () => {
-    navigate("/book-test-drive", { state: { carName: car.name } });
+    navigate("/book-test-drive", { state: { carName: car.name, carId: car._id } });
   };
 
-  // ✅ Next/Prev in fullscreen gallery
   const handleNext = () => {
     if (car.images && fullscreenIndex !== null) {
       setFullscreenIndex((prev) => (prev + 1) % car.images.length);
@@ -76,7 +77,7 @@ function CarDetails() {
             {car.images.map((img, idx) => (
               <img
                 key={idx}
-                src={`${API_BASE}${img}`}
+                src={getImageUrl(img)}
                 alt={`${car.name} ${idx}`}
                 style={{
                   width: "180px",
@@ -148,7 +149,6 @@ function CarDetails() {
             cursor: "pointer",
           }}
         >
-          {/* Prev */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -167,14 +167,12 @@ function CarDetails() {
             ⬅
           </button>
 
-          {/* Image */}
           <img
-            src={`${API_BASE}${car.images[fullscreenIndex]}`}
+            src={getImageUrl(car.images[fullscreenIndex])}
             alt="fullscreen"
             style={{ maxWidth: "90%", maxHeight: "90%", borderRadius: "10px" }}
           />
 
-          {/* Next */}
           <button
             onClick={(e) => {
               e.stopPropagation();
