@@ -8,7 +8,11 @@ function CarDetails() {
   const navigate = useNavigate();
 
   const API_BASE =
-    import.meta.env.VITE_API_URL || "https://beseki-backend.onrender.com";
+    (typeof import.meta !== "undefined" &&
+      import.meta.env &&
+      import.meta.env.VITE_API_URL) ||
+    process.env.REACT_APP_API_URL ||
+    "https://beseki-backend.onrender.com";
 
   // ✅ Helper to handle both full and relative URLs
   const getImageUrl = (img) =>

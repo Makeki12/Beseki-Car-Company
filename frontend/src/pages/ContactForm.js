@@ -19,7 +19,11 @@ export default function BookTestDrive() {
   const [status, setStatus] = useState(null);
 
   const API_BASE =
-    import.meta.env.VITE_API_URL || "https://beseki-backend.onrender.com";
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_API_URL) ||
+  process.env.REACT_APP_API_URL ||
+  "https://beseki-backend.onrender.com";
 
   useEffect(() => {
     fetch(`${API_BASE}/api/cars`)
