@@ -2,23 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
 function CarDetails() {
-  const { id } = useParams();
+  const { id } = useParams(); // must match :id in route
   const [car, setCar] = useState(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE =
-    (typeof import.meta !== "undefined" &&
-      import.meta.env &&
-      import.meta.env.VITE_API_URL) ||
-    process.env.REACT_APP_API_URL ||
-    "https://beseki-backend.onrender.com";
+  const API_BASE = "https://beseki-backend.onrender.com"; // your backend
 
-  // ✅ Helper to handle both full and relative URLs
-  const getImageUrl = (img) =>
-    img.startsWith("http") ? img : `${API_BASE}${img}`;
+  // ✅ Cloudinary images are objects { url, public_id }
+  const getImageUrl = (img) => (img.url ? img.url : img);
 
   useEffect(() => {
+    if (!id) return;
+
     async function fetchCar() {
       try {
         const res = await fetch(`${API_BASE}/api/cars/${id}`);
@@ -30,7 +26,7 @@ function CarDetails() {
       }
     }
     fetchCar();
-  }, [id, API_BASE]);
+  }, [id]);
 
   if (!car) {
     return (
@@ -73,11 +69,9 @@ function CarDetails() {
       <h2 style={{ marginBottom: "20px", color: "#0d47a1" }}>{car.name}</h2>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        {/* ✅ Image Gallery */}
+        {/* Image Gallery */}
         {car.images && car.images.length > 0 ? (
-          <div
-            style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px" }}
-          >
+          <div style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px" }}>
             {car.images.map((img, idx) => (
               <img
                 key={idx}
@@ -98,11 +92,10 @@ function CarDetails() {
           <p>No images available</p>
         )}
 
-        {/* ✅ Car Info */}
+        {/* Car Info */}
         <div style={{ flex: "1", minWidth: "250px" }}>
           <p style={{ fontSize: "18px" }}>
-            <strong>💲 Price:</strong> Ksh{" "}
-            {Number(car.price).toLocaleString()}
+            <strong>💲 Price:</strong> Ksh {Number(car.price).toLocaleString()}
           </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
             <strong>📌 Description:</strong> {car.description}
@@ -119,10 +112,7 @@ function CarDetails() {
               borderRadius: "8px",
               fontSize: "16px",
               cursor: "pointer",
-              transition: "0.3s",
             }}
-            onMouseOver={(e) => (e.target.style.background = "#08306b")}
-            onMouseOut={(e) => (e.target.style.background = "#0d47a1")}
           >
             🚗 Book Test Drive
           </button>
@@ -135,7 +125,7 @@ function CarDetails() {
         </Link>
       </div>
 
-      {/* ✅ Fullscreen Lightbox */}
+      {/* Fullscreen Lightbox */}
       {fullscreenIndex !== null && (
         <div
           onClick={() => setFullscreenIndex(null)}
