@@ -2,18 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
 function CarDetails() {
-  const { id } = useParams(); // must match :id in route
+  const { id } = useParams(); // Must match the route: /car/:id
   const [car, setCar] = useState(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE = "https://beseki-backend.onrender.com"; // your backend
+  const API_BASE = "https://beseki-backend.onrender.com";
 
-  // ✅ Cloudinary images are objects { url, public_id }
-  const getImageUrl = (img) => (img.url ? img.url : img);
+  // Safely get image URL (supports objects with .url or direct string)
+  const getImageUrl = (img) => (img?.url ? img.url : img);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) return; // Stop if id is undefined
 
     async function fetchCar() {
       try {
@@ -25,6 +25,7 @@ function CarDetails() {
         console.error("Error fetching car details:", err);
       }
     }
+
     fetchCar();
   }, [id]);
 
@@ -37,7 +38,9 @@ function CarDetails() {
   }
 
   const handleBookTestDrive = () => {
-    navigate("/book-test-drive", { state: { carName: car.name, carId: car._id } });
+    navigate("/book-test-drive", {
+      state: { carName: car.name, carId: car._id },
+    });
   };
 
   const handleNext = () => {
