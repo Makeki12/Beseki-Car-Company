@@ -6,19 +6,18 @@ function FeaturedCars() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Use deployed backend for production
+  // ✅ Backend URL
   const BASE_URL =
     process.env.NODE_ENV === "production"
-      ? "https://beseki-car-company.onrender.com"
+      ? "https://beseki-backend.onrender.com" // <-- ✅ use backend domain
       : "http://localhost:5000";
 
+  // ✅ Fetch cars from backend
   useEffect(() => {
     const fetchCars = async () => {
       try {
         const res = await fetch(`${BASE_URL}/api/cars`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch cars: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch cars: ${res.status}`);
         const data = await res.json();
         setCars(data);
       } catch (err) {
@@ -80,13 +79,13 @@ function FeaturedCars() {
           }}
         >
           {cars.map((car) => {
-            // ✅ Handle both single & multiple images correctly
-            const imagePath =
-              car.images && car.images.length > 0
-                ? car.images[0]
-                : car.image
-                ? car.image
-                : null;
+            // ✅ Safely handle Cloudinary or relative URLs
+            const imageUrl =
+              car.images?.[0]?.url ||
+              car.image ||
+              (car.images?.length > 0
+                ? `${BASE_URL}${car.images[0]}`
+                : "/default-car.jpg");
 
             return (
               <div
@@ -109,39 +108,25 @@ function FeaturedCars() {
                     "0 6px 15px rgba(0,0,0,0.1)";
                 }}
               >
-                {imagePath ? (
-                  <img
-                    src={`${BASE_URL}${imagePath}`}
-                    alt={car.name}
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      borderRadius: "10px",
-                      objectFit: "cover",
-                      marginBottom: "15px",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      borderRadius: "10px",
-                      background: "#ddd",
-                      marginBottom: "15px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#666",
-                    }}
-                  >
-                    No Image Available
-                  </div>
-                )}
+                <img
+                  src={imageUrl}
+                  alt={car.name}
+                  style={{
+                    width: "100%",
+                    height: "200px",
+                    borderRadius: "10px",
+                    objectFit: "cover",
+                    marginBottom: "15px",
+                  }}
+                  onError={(e) => {
+                    e.target.src = "/default-car.jpg"; // fallback
+                  }}
+                />
 
                 <h3 style={{ margin: "10px 0", fontSize: "1.3rem" }}>
                   {car.name}
                 </h3>
+
                 <p
                   style={{
                     fontWeight: "bold",
@@ -150,8 +135,9 @@ function FeaturedCars() {
                     margin: "5px 0",
                   }}
                 >
-                  ${car.price}
+                  Ksh {Number(car.price).toLocaleString()}
                 </p>
+
                 <p
                   style={{
                     fontSize: "0.95rem",
