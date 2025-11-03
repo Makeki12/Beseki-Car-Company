@@ -6,13 +6,9 @@ function FeaturedCars() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Backend URL
-  const BASE_URL =
-    process.env.NODE_ENV === "production"
-      ? "https://beseki-backend.onrender.com" // <-- ✅ use backend domain
-      : "http://localhost:5000";
+  // ✅ Use your working backend domain
+  const BASE_URL = "https://beseki-car-company.onrender.com";
 
-  // ✅ Fetch cars from backend
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -28,24 +24,22 @@ function FeaturedCars() {
       }
     };
     fetchCars();
-  }, [BASE_URL]);
+  }, []);
 
-  if (loading) {
+  if (loading)
     return (
       <section style={{ textAlign: "center", padding: "50px" }}>
         <h3>Loading featured cars...</h3>
       </section>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <section style={{ textAlign: "center", padding: "50px", color: "red" }}>
         <h3>⚠️ Failed to load cars</h3>
         <p>{error}</p>
       </section>
     );
-  }
 
   return (
     <section
@@ -79,13 +73,18 @@ function FeaturedCars() {
           }}
         >
           {cars.map((car) => {
-            // ✅ Safely handle Cloudinary or relative URLs
-            const imageUrl =
-              car.images?.[0]?.url ||
-              car.image ||
-              (car.images?.length > 0
-                ? `${BASE_URL}${car.images[0]}`
-                : "/default-car.jpg");
+            // ✅ Handle both array and single image fields
+            const imagePath =
+              car.images && car.images.length > 0
+                ? car.images[0]
+                : car.image
+                ? car.image
+                : null;
+
+            // ✅ Ensure image paths are absolute
+            const imageUrl = imagePath?.startsWith("http")
+              ? imagePath
+              : `${BASE_URL}${imagePath || ""}`;
 
             return (
               <div
@@ -108,25 +107,40 @@ function FeaturedCars() {
                     "0 6px 15px rgba(0,0,0,0.1)";
                 }}
               >
-                <img
-                  src={imageUrl}
-                  alt={car.name}
-                  style={{
-                    width: "100%",
-                    height: "200px",
-                    borderRadius: "10px",
-                    objectFit: "cover",
-                    marginBottom: "15px",
-                  }}
-                  onError={(e) => {
-                    e.target.src = "/default-car.jpg"; // fallback
-                  }}
-                />
+                {imagePath ? (
+                  <img
+                    src={imageUrl}
+                    alt={car.name}
+                    style={{
+                      width: "100%",
+                      height: "200px",
+                      borderRadius: "10px",
+                      objectFit: "cover",
+                      marginBottom: "15px",
+                    }}
+                    onError={(e) => (e.target.style.display = "none")}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "200px",
+                      borderRadius: "10px",
+                      background: "#ddd",
+                      marginBottom: "15px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#666",
+                    }}
+                  >
+                    No Image Available
+                  </div>
+                )}
 
                 <h3 style={{ margin: "10px 0", fontSize: "1.3rem" }}>
                   {car.name}
                 </h3>
-
                 <p
                   style={{
                     fontWeight: "bold",
@@ -135,9 +149,8 @@ function FeaturedCars() {
                     margin: "5px 0",
                   }}
                 >
-                  Ksh {Number(car.price).toLocaleString()}
+                  ${car.price}
                 </p>
-
                 <p
                   style={{
                     fontSize: "0.95rem",
@@ -162,12 +175,6 @@ function FeaturedCars() {
                     textDecoration: "none",
                     transition: "0.3s",
                   }}
-                  onMouseOver={(e) =>
-                    (e.target.style.background = "#08306b")
-                  }
-                  onMouseOut={(e) =>
-                    (e.target.style.background = "#0d47a1")
-                  }
                 >
                   View Details →
                 </Link>
