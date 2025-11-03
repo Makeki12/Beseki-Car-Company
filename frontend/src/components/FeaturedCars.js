@@ -6,7 +6,6 @@ function FeaturedCars() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Use your working backend domain
   const BASE_URL = "https://beseki-car-company.onrender.com";
 
   useEffect(() => {
@@ -73,18 +72,11 @@ function FeaturedCars() {
           }}
         >
           {cars.map((car) => {
-            // ✅ Handle both array and single image fields
-            const imagePath =
+            // ✅ Get first image URL safely
+            const imageUrl =
               car.images && car.images.length > 0
-                ? car.images[0]
-                : car.image
-                ? car.image
+                ? car.images[0].url // <-- Access the URL from object
                 : null;
-
-            // ✅ Ensure image paths are absolute
-            const imageUrl = imagePath?.startsWith("http")
-              ? imagePath
-              : `${BASE_URL}${imagePath || ""}`;
 
             return (
               <div
@@ -96,18 +88,8 @@ function FeaturedCars() {
                   padding: "20px",
                   transition: "transform 0.3s, box-shadow 0.3s",
                 }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 10px 20px rgba(0,0,0,0.2)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 6px 15px rgba(0,0,0,0.1)";
-                }}
               >
-                {imagePath ? (
+                {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={car.name}
@@ -118,7 +100,6 @@ function FeaturedCars() {
                       objectFit: "cover",
                       marginBottom: "15px",
                     }}
-                    onError={(e) => (e.target.style.display = "none")}
                   />
                 ) : (
                   <div
