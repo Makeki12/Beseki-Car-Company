@@ -2,32 +2,88 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
 function CarDetails() {
-  const { id } = useParams(); // Must match the route: /car/:id
+  const { id } = useParams(); // gets /car/:id
   const [car, setCar] = useState(null);
+  const [error, setError] = useState(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
   const API_BASE = "https://beseki-backend.onrender.com";
 
-  // Safely get image URL (supports objects with .url or direct string)
-  const getImageUrl = (img) => (img?.url ? img.url : img);
+  // ✅ Safely get image URL (works for {url: "..."} or direct string)
+  const getImageUrl = (img) => {
+    if (!img) return null;
+    return typeof img === "string" ? img : img.url;
+  };
 
   useEffect(() => {
-    if (!id) return; // Stop if id is undefined
+    if (!id) {
+      setError("Invalid car ID");
+      return;
+    }
 
-    async function fetchCar() {
+    const fetchCar = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/cars/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch car");
+        if (!res.ok) {
+          throw new Error(`Failed to fetch car details (status: ${res.status})`);
+        }
+
         const data = await res.json();
         setCar(data);
       } catch (err) {
-        console.error("Error fetching car details:", err);
+        console.error("❌ Error fetching car details:", err);
+        setError(
+          err.message.includes("CORS")
+            ? "CORS error: please allow requests from your Vercel domain in backend."
+            : err.message
+        );
       }
-    }
+    };
 
     fetchCar();
   }, [id]);
+
+  // ✅ Handle booking navigation
+  const handleBookTestDrive = () => {
+    navigate("/book-test-drive", {
+      state: { carName: car?.name, carId: car?._id || car?.id },
+    });
+  };
+
+  // ✅ Image navigation for fullscreen mode
+  const handleNext = () => {
+    if (car?.images && fullscreenIndex !== null) {
+      setFullscreenIndex((prev) => (prev + 1) % car.images.length);
+    }
+  };
+
+  const handlePrev = () => {
+    if (car?.images && fullscreenIndex !== null) {
+      setFullscreenIndex(
+        (prev) => (prev - 1 + car.images.length) % car.images.length
+      );
+    }
+  };
+
+  // ✅ Handle loading and error states
+  if (error) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          color: "red",
+          padding: "50px",
+          fontSize: "18px",
+        }}
+      >
+        <p>⚠️ {error}</p>
+        <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>
+          ← Back to Cars
+        </Link>
+      </div>
+    );
+  }
 
   if (!car) {
     return (
@@ -36,26 +92,6 @@ function CarDetails() {
       </p>
     );
   }
-
-  const handleBookTestDrive = () => {
-    navigate("/book-test-drive", {
-      state: { carName: car.name, carId: car._id },
-    });
-  };
-
-  const handleNext = () => {
-    if (car.images && fullscreenIndex !== null) {
-      setFullscreenIndex((prev) => (prev + 1) % car.images.length);
-    }
-  };
-
-  const handlePrev = () => {
-    if (car.images && fullscreenIndex !== null) {
-      setFullscreenIndex(
-        (prev) => (prev - 1 + car.images.length) % car.images.length
-      );
-    }
-  };
 
   return (
     <div
@@ -69,39 +105,52 @@ function CarDetails() {
         background: "#fff",
       }}
     >
+      {/* Car name */}
       <h2 style={{ marginBottom: "20px", color: "#0d47a1" }}>{car.name}</h2>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        {/* Image Gallery */}
+        {/* ✅ Image Gallery */}
         {car.images && car.images.length > 0 ? (
-          <div style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px" }}>
-            {car.images.map((img, idx) => (
-              <img
-                key={idx}
-                src={getImageUrl(img)}
-                alt={`${car.name} ${idx}`}
-                style={{
-                  width: "180px",
-                  height: "120px",
-                  borderRadius: "8px",
-                  objectFit: "cover",
-                  cursor: "pointer",
-                }}
-                onClick={() => setFullscreenIndex(idx)}
-              />
-            ))}
+          <div
+            style={{
+              flex: "1",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
+              justifyContent: "center",
+            }}
+          >
+            {car.images.map((img, idx) => {
+              const url = getImageUrl(img);
+              return (
+                <img
+                  key={idx}
+                  src={url}
+                  alt={`${car.name} ${idx}`}
+                  style={{
+                    width: "180px",
+                    height: "120px",
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setFullscreenIndex(idx)}
+                />
+              );
+            })}
           </div>
         ) : (
           <p>No images available</p>
         )}
 
-        {/* Car Info */}
+        {/* ✅ Car Info */}
         <div style={{ flex: "1", minWidth: "250px" }}>
           <p style={{ fontSize: "18px" }}>
-            <strong>💲 Price:</strong> Ksh {Number(car.price).toLocaleString()}
+            <strong>💲 Price:</strong> Ksh{" "}
+            {Number(car.price).toLocaleString() || "N/A"}
           </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
-            <strong>📌 Description:</strong> {car.description}
+            <strong>📌 Description:</strong> {car.description || "No description available."}
           </p>
 
           <button
@@ -128,7 +177,7 @@ function CarDetails() {
         </Link>
       </div>
 
-      {/* Fullscreen Lightbox */}
+      {/* ✅ Fullscreen Image Viewer */}
       {fullscreenIndex !== null && (
         <div
           onClick={() => setFullscreenIndex(null)}
