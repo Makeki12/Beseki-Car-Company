@@ -10,6 +10,7 @@ const API_BASE_URL =
 async function fetchCarsData(setCars) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/cars`);
+    if (!res.ok) throw new Error("Failed to fetch cars");
     const data = await res.json();
     setCars(data);
   } catch (error) {
@@ -42,13 +43,13 @@ export default function AdminDashboard() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  // Fetch data once on mount
+  // Fetch all data
   useEffect(() => {
     fetchCarsData(setCars);
     fetchBookingsData(setBookings, token);
   }, [token]);
 
-  // Filter bookings
+  // Filter bookings dynamically
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = bookings.filter(
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
     setFilteredBookings(filtered);
   }, [bookings, searchTerm]);
 
-  // Handlers
+  // ---------- Handlers ----------
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -101,6 +102,7 @@ export default function AdminDashboard() {
         throw new Error(err.error || "Failed to save car");
       }
 
+      alert(editCarId ? "✅ Car updated successfully!" : "🚗 Car added successfully!");
       setForm({ name: "", price: "", description: "" });
       setImages([]);
       setPreview([]);
@@ -113,11 +115,7 @@ export default function AdminDashboard() {
   }
 
   async function handleDeleteCar(id) {
-    if (!id) {
-      alert("Invalid car ID — cannot delete.");
-      console.error("Car ID is undefined.");
-      return;
-    }
+    if (!id) return alert("Invalid car ID.");
 
     if (!window.confirm("Are you sure you want to delete this car?")) return;
 
@@ -133,6 +131,7 @@ export default function AdminDashboard() {
         throw new Error(err.error || "Failed to delete car");
       }
 
+      alert("✅ Car deleted successfully.");
       await fetchCarsData(setCars);
     } catch (error) {
       console.error("Error deleting car:", error);
@@ -140,36 +139,33 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleDeleteImage(carId, index) {
-    if (!carId) {
-      alert("Invalid car ID for image deletion.");
-      return;
-    }
+  async function handleDeleteBooking(id) {
+    if (!id) return alert("Invalid booking ID.");
+
+    if (!window.confirm("Are you sure you want to delete this booking?")) return;
+
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/cars/${carId}/images/${index}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to delete image");
+        throw new Error(err.error || "Failed to delete booking");
       }
-      fetchCarsData(setCars);
+
+      alert("✅ Booking deleted successfully.");
+      await fetchBookingsData(setBookings, token);
     } catch (error) {
-      console.error("Error deleting image:", error);
-      alert("Error deleting image: " + error.message);
+      console.error("Error deleting booking:", error);
+      alert("Error deleting booking: " + error.message);
     }
   }
 
   function handleEditCar(car) {
     const carId = car._id || car.id;
-    if (!carId) {
-      alert("Invalid car ID — cannot edit.");
-      return;
-    }
+    if (!carId) return alert("Invalid car ID — cannot edit.");
 
     console.log("✏️ Editing car with ID:", carId);
     setEditCarId(carId);
@@ -298,7 +294,7 @@ export default function AdminDashboard() {
         )}
       </form>
 
-      {/* Cars Section */}
+      {/* ---------- Cars Section ---------- */}
       <h3>Cars in Showroom</h3>
       {cars.length === 0 ? (
         <p>No cars available.</p>
@@ -341,37 +337,25 @@ export default function AdminDashboard() {
                       marginTop: "10px",
                     }}
                   >
-                    {car.images.map((img, idx) => (
-                      <div key={idx} style={{ position: "relative" }}>
+                    {car.images.map((img, idx) => {
+                      const imgSrc =
+                        typeof img === "string"
+                          ? `${API_BASE_URL}${img}`
+                          : img.url || `${API_BASE_URL}${img}`;
+                      return (
                         <img
-                          src={`${API_BASE_URL}${img}`}
+                          key={idx}
+                          src={imgSrc}
                           alt={`${car.name} ${idx}`}
-                          width="100%"
                           style={{
                             borderRadius: "8px",
                             maxHeight: "150px",
+                            width: "100%",
                             objectFit: "cover",
                           }}
                         />
-                        <button
-                          onClick={() => handleDeleteImage(carId, idx)}
-                          style={{
-                            position: "absolute",
-                            top: "5px",
-                            right: "5px",
-                            background: "rgba(255,0,0,0.8)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "50%",
-                            width: "22px",
-                            height: "22px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -405,6 +389,100 @@ export default function AdminDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ---------- Bookings Section ---------- */}
+      <h3 style={{ marginTop: "40px" }}>Test Drive Bookings</h3>
+      <input
+        type="text"
+        placeholder="Search bookings by car, name, email, or phone..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "20px",
+          border: "1px solid #ccc",
+          borderRadius: "5px",
+        }}
+      />
+
+      {filteredBookings.length === 0 ? (
+        <p>No bookings found.</p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "20px",
+          }}
+        >
+          {filteredBookings.map((booking) => (
+            <div
+              key={booking._id}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: "10px",
+                padding: "15px",
+                background: "#fff",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h4 style={{ color: "#1976d2" }}>{booking.car?.name || "Unknown Car"}</h4>
+              <p>
+                <strong>Name:</strong> {booking.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {booking.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {booking.phone}
+              </p>
+              <p>
+                <strong>Date:</strong> {new Date(booking.date).toLocaleString()}
+              </p>
+
+              <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+                <a
+                  href={`tel:${booking.phone}`}
+                  style={{
+                    background: "green",
+                    color: "white",
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    textDecoration: "none",
+                  }}
+                >
+                  📞 Call
+                </a>
+                <a
+                  href={`mailto:${booking.email}`}
+                  style={{
+                    background: "#1976d2",
+                    color: "white",
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    textDecoration: "none",
+                  }}
+                >
+                  ✉️ Email
+                </a>
+                <button
+                  onClick={() => handleDeleteBooking(booking._id)}
+                  style={{
+                    background: "red",
+                    color: "white",
+                    padding: "5px 10px",
+                    border: "none",
+                    borderRadius: "5px",
+                  }}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
