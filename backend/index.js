@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
 const path = require("path");
 
 const app = express();
@@ -10,25 +9,33 @@ const app = express();
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-// ✅ FIXED CORS CONFIG
+// -------------------- ROBUST CORS --------------------
 const allowedOrigins = [
-  "http://localhost:3000", // local dev
-  "https://beseki-car-company.vercel.app", // your Vercel frontend
+  "http://localhost:3000",
+  "https://beseki-car-company.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Preflight OK
+  }
+
+  next();
+});
 
 // -------------------- DATABASE CONNECTION --------------------
 mongoose
