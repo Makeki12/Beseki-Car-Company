@@ -2,15 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
 function CarDetails() {
-  const { id } = useParams(); // gets /car/:id
+  const { id } = useParams();
   const [car, setCar] = useState(null);
   const [error, setError] = useState(null);
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
+  // ✅ Your deployed backend
   const API_BASE = "https://beseki-backend.onrender.com";
 
-  // ✅ Safely get image URL (works for {url: "..."} or direct string)
+  // ✅ Helper: Get image URL safely
   const getImageUrl = (img) => {
     if (!img) return null;
     return typeof img === "string" ? img : img.url;
@@ -18,24 +19,38 @@ function CarDetails() {
 
   useEffect(() => {
     if (!id) {
-      setError("Invalid car ID");
+      setError("Invalid car ID provided");
       return;
     }
 
     const fetchCar = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/cars/${id}`);
+        console.log("🚗 Fetching car details for ID:", id);
+
+        const res = await fetch(`${API_BASE}/api/cars/${id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
         if (!res.ok) {
-          throw new Error(`Failed to fetch car details (status: ${res.status})`);
+          // Custom error message for better clarity
+          if (res.status === 404) {
+            throw new Error("Car not found. It may have been deleted.");
+          } else if (res.status === 400) {
+            throw new Error("Invalid car ID format.");
+          } else {
+            throw new Error(`Failed to fetch car (status ${res.status})`);
+          }
         }
 
         const data = await res.json();
+        console.log("✅ Car fetched successfully:", data);
         setCar(data);
       } catch (err) {
         console.error("❌ Error fetching car details:", err);
         setError(
           err.message.includes("CORS")
-            ? "CORS error: please allow requests from your Vercel domain in backend."
+            ? "CORS issue: Please ensure your backend allows requests from this frontend domain."
             : err.message
         );
       }
@@ -51,7 +66,7 @@ function CarDetails() {
     });
   };
 
-  // ✅ Image navigation for fullscreen mode
+  // ✅ Image navigation (fullscreen gallery)
   const handleNext = () => {
     if (car?.images && fullscreenIndex !== null) {
       setFullscreenIndex((prev) => (prev + 1) % car.images.length);
@@ -93,6 +108,7 @@ function CarDetails() {
     );
   }
 
+  // ✅ UI for car details
   return (
     <div
       style={{
@@ -150,7 +166,8 @@ function CarDetails() {
             {Number(car.price).toLocaleString() || "N/A"}
           </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
-            <strong>📌 Description:</strong> {car.description || "No description available."}
+            <strong>📌 Description:</strong>{" "}
+            {car.description || "No description available."}
           </p>
 
           <button
