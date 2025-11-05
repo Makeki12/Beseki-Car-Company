@@ -8,18 +8,13 @@ function CarDetails() {
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Your deployed backend
-  const API_BASE = "https://beseki-backend.onrender.com";
+  const API_BASE = "https://beseki-backend.onrender.com"; // Your backend
 
-  // ✅ Helper: Get image URL safely
-  const getImageUrl = (img) => {
-    if (!img) return null;
-    return typeof img === "string" ? img : img.url;
-  };
+  const getImageUrl = (img) => (img ? (typeof img === "string" ? img : img.url) : null);
 
   useEffect(() => {
     if (!id) {
-      setError("Invalid car ID provided");
+      setError("Invalid car ID");
       return;
     }
 
@@ -27,30 +22,20 @@ function CarDetails() {
       try {
         console.log("🚗 Fetching car details for ID:", id);
 
-        const res = await fetch(`${API_BASE}/api/cars/${id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
+        const res = await fetch(`${API_BASE}/api/cars/${id}`);
         if (!res.ok) {
-          // Custom error message for better clarity
-          if (res.status === 404) {
-            throw new Error("Car not found. It may have been deleted.");
-          } else if (res.status === 400) {
-            throw new Error("Invalid car ID format.");
-          } else {
-            throw new Error(`Failed to fetch car (status ${res.status})`);
-          }
+          if (res.status === 404) throw new Error("Car not found.");
+          throw new Error(`Failed to fetch car (status ${res.status})`);
         }
 
         const data = await res.json();
-        console.log("✅ Car fetched successfully:", data);
         setCar(data);
+        console.log("✅ Car fetched:", data);
       } catch (err) {
         console.error("❌ Error fetching car details:", err);
         setError(
           err.message.includes("CORS")
-            ? "CORS issue: Please ensure your backend allows requests from this frontend domain."
+            ? "CORS issue: check backend allows requests from this frontend domain."
             : err.message
         );
       }
@@ -59,14 +44,12 @@ function CarDetails() {
     fetchCar();
   }, [id]);
 
-  // ✅ Handle booking navigation
   const handleBookTestDrive = () => {
     navigate("/book-test-drive", {
       state: { carName: car?.name, carId: car?._id || car?.id },
     });
   };
 
-  // ✅ Image navigation (fullscreen gallery)
   const handleNext = () => {
     if (car?.images && fullscreenIndex !== null) {
       setFullscreenIndex((prev) => (prev + 1) % car.images.length);
@@ -75,23 +58,13 @@ function CarDetails() {
 
   const handlePrev = () => {
     if (car?.images && fullscreenIndex !== null) {
-      setFullscreenIndex(
-        (prev) => (prev - 1 + car.images.length) % car.images.length
-      );
+      setFullscreenIndex((prev) => (prev - 1 + car.images.length) % car.images.length);
     }
   };
 
-  // ✅ Handle loading and error states
   if (error) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          color: "red",
-          padding: "50px",
-          fontSize: "18px",
-        }}
-      >
+      <div style={{ textAlign: "center", color: "red", padding: "50px", fontSize: "18px" }}>
         <p>⚠️ {error}</p>
         <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>
           ← Back to Cars
@@ -101,14 +74,9 @@ function CarDetails() {
   }
 
   if (!car) {
-    return (
-      <p style={{ textAlign: "center", marginTop: "20px", fontSize: "18px" }}>
-        Loading car details...
-      </p>
-    );
+    return <p style={{ textAlign: "center", marginTop: "20px", fontSize: "18px" }}>Loading car details...</p>;
   }
 
-  // ✅ UI for car details
   return (
     <div
       style={{
@@ -121,11 +89,9 @@ function CarDetails() {
         background: "#fff",
       }}
     >
-      {/* Car name */}
       <h2 style={{ marginBottom: "20px", color: "#0d47a1" }}>{car.name}</h2>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-        {/* ✅ Image Gallery */}
         {car.images && car.images.length > 0 ? (
           <div
             style={{
@@ -136,40 +102,27 @@ function CarDetails() {
               justifyContent: "center",
             }}
           >
-            {car.images.map((img, idx) => {
-              const url = getImageUrl(img);
-              return (
-                <img
-                  key={idx}
-                  src={url}
-                  alt={`${car.name} ${idx}`}
-                  style={{
-                    width: "180px",
-                    height: "120px",
-                    borderRadius: "8px",
-                    objectFit: "cover",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setFullscreenIndex(idx)}
-                />
-              );
-            })}
+            {car.images.map((img, idx) => (
+              <img
+                key={idx}
+                src={getImageUrl(img)}
+                alt={`${car.name} ${idx}`}
+                style={{ width: "180px", height: "120px", borderRadius: "8px", objectFit: "cover", cursor: "pointer" }}
+                onClick={() => setFullscreenIndex(idx)}
+              />
+            ))}
           </div>
         ) : (
           <p>No images available</p>
         )}
 
-        {/* ✅ Car Info */}
         <div style={{ flex: "1", minWidth: "250px" }}>
           <p style={{ fontSize: "18px" }}>
-            <strong>💲 Price:</strong> Ksh{" "}
-            {Number(car.price).toLocaleString() || "N/A"}
+            <strong>💲 Price:</strong> Ksh {Number(car.price).toLocaleString() || "N/A"}
           </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
-            <strong>📌 Description:</strong>{" "}
-            {car.description || "No description available."}
+            <strong>📌 Description:</strong> {car.description || "No description available."}
           </p>
-
           <button
             onClick={handleBookTestDrive}
             style={{
@@ -194,7 +147,6 @@ function CarDetails() {
         </Link>
       </div>
 
-      {/* ✅ Fullscreen Image Viewer */}
       {fullscreenIndex !== null && (
         <div
           onClick={() => setFullscreenIndex(null)}
