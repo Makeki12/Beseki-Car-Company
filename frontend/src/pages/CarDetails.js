@@ -8,7 +8,7 @@ function CarDetails() {
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE = "https://beseki-backend.onrender.com"; // Your backend
+  const API_BASE = "https://beseki-car-company.onrender.com"; // Your backend
 
   const getImageUrl = (img) => (img ? (typeof img === "string" ? img : img.url) : null);
 
