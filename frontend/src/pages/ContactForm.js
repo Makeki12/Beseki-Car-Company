@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 export default function BookTestDrive() {
@@ -9,13 +9,15 @@ export default function BookTestDrive() {
     name: "",
     email: "",
     phone: "",
-    carId: preselectedCarId, // preselect car if user clicked from CarDetails
+    carId: preselectedCarId,
     preferredDate: "",
     message: "",
   });
 
   const [cars, setCars] = useState([]);
   const [status, setStatus] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef();
 
   const API_BASE =
     (typeof import.meta !== "undefined" &&
@@ -37,8 +39,24 @@ export default function BookTestDrive() {
       });
   }, [API_BASE]);
 
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  function selectCar(carId) {
+    setForm({ ...form, carId });
+    setDropdownOpen(false);
   }
 
   async function handleSubmit(e) {
@@ -58,7 +76,7 @@ export default function BookTestDrive() {
           name: "",
           email: "",
           phone: "",
-          carId: preselectedCarId, // keep the preselected car
+          carId: preselectedCarId,
           preferredDate: "",
           message: "",
         });
@@ -72,23 +90,26 @@ export default function BookTestDrive() {
     }
   }
 
+  const selectedCar = cars.find((c) => c._id === form.carId);
+
   return (
     <div
       style={{
-        maxWidth: "550px",
-        margin: "50px auto",
+        maxWidth: "600px",
+        margin: "40px auto",
         padding: "30px",
-        border: "1px solid #ddd",
-        borderRadius: "12px",
-        boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-        background: "#fff",
+        borderRadius: "14px",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+        background: "#ffffff",
         fontFamily: "Arial, sans-serif",
+        transition: "all 0.3s ease",
       }}
     >
       <h2
         style={{
           textAlign: "center",
           color: "#0d47a1",
+          fontSize: "28px",
           marginBottom: "25px",
         }}
       >
@@ -97,7 +118,11 @@ export default function BookTestDrive() {
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "15px",
+        }}
       >
         <input
           name="name"
@@ -106,10 +131,11 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "12px",
-            borderRadius: "8px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
-            fontSize: "14px",
+            fontSize: "15px",
+            outline: "none",
           }}
         />
 
@@ -121,10 +147,11 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "12px",
-            borderRadius: "8px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
-            fontSize: "14px",
+            fontSize: "15px",
+            outline: "none",
           }}
         />
 
@@ -135,43 +162,116 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "12px",
-            borderRadius: "8px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
-            fontSize: "14px",
+            fontSize: "15px",
+            outline: "none",
           }}
         />
 
-        <select
-          name="carId"
-          value={form.carId}
-          onChange={handleChange}
-          required
-          style={{
-            padding: "12px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-            fontSize: "14px",
-            backgroundColor: "#f9f9f9",
-            color: "#333",
-          }}
+        {/* Custom dropdown */}
+        <div
+          ref={dropdownRef}
+          style={{ position: "relative", width: "100%" }}
         >
-          <option value="" disabled>
-            -- Select Car Model --
-          </option>
-          {cars.map((car) => (
-            <option
-              key={car._id}
-              value={car._id}
+          <div
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            style={{
+              padding: "14px",
+              borderRadius: "10px",
+              border: "1px solid #ccc",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "#f9f9f9",
+            }}
+          >
+            {selectedCar ? (
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                {selectedCar.images?.[0]?.url && (
+                  <img
+                    src={selectedCar.images[0].url}
+                    alt={selectedCar.name}
+                    style={{
+                      width: "40px",
+                      height: "30px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />
+                )}
+                <span>{selectedCar.name} — Ksh {Number(selectedCar.price).toLocaleString()}</span>
+              </div>
+            ) : (
+              <span style={{ color: "#999" }}>-- Select Car Model --</span>
+            )}
+            <span
               style={{
-                fontWeight: car._id === preselectedCarId ? "bold" : "normal",
-                backgroundColor: car._id === preselectedCarId ? "#e3f2fd" : "",
+                transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.3s",
               }}
             >
-              {car.name} — Ksh {Number(car.price).toLocaleString()}
-            </option>
-          ))}
-        </select>
+              ▼
+            </span>
+          </div>
+
+          {dropdownOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "110%",
+                left: 0,
+                right: 0,
+                maxHeight: "250px",
+                overflowY: "auto",
+                border: "1px solid #ccc",
+                borderRadius: "10px",
+                background: "#fff",
+                zIndex: 100,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+                transition: "all 0.3s",
+              }}
+            >
+              {cars.map((car) => (
+                <div
+                  key={car._id}
+                  onClick={() => selectCar(car._id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "12px",
+                    cursor: "pointer",
+                    background:
+                      car._id === form.carId ? "#e3f2fd" : "#fff",
+                    transition: "0.2s",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#f0f0f0"}
+                  onMouseLeave={(e) => e.currentTarget.style.background =
+                    car._id === form.carId ? "#e3f2fd" : "#fff"}
+                >
+                  {car.images?.[0]?.url && (
+                    <img
+                      src={car.images[0].url}
+                      alt={car.name}
+                      style={{
+                        width: "50px",
+                        height: "35px",
+                        objectFit: "cover",
+                        borderRadius: "6px",
+                      }}
+                    />
+                  )}
+                  <span>{car.name} — Ksh {Number(car.price).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <input
           name="preferredDate"
@@ -180,10 +280,11 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "12px",
-            borderRadius: "8px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
-            fontSize: "14px",
+            fontSize: "15px",
+            outline: "none",
           }}
         />
 
@@ -193,22 +294,23 @@ export default function BookTestDrive() {
           value={form.message}
           onChange={handleChange}
           style={{
-            padding: "12px",
-            borderRadius: "8px",
+            padding: "14px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
             minHeight: "100px",
-            fontSize: "14px",
+            fontSize: "15px",
+            outline: "none",
           }}
         />
 
         <button
           type="submit"
           style={{
-            padding: "12px",
+            padding: "14px",
             background: "#0d47a1",
             color: "white",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "10px",
             cursor: "pointer",
             fontSize: "16px",
             transition: "0.3s",
@@ -227,6 +329,7 @@ export default function BookTestDrive() {
             textAlign: "center",
             color: status.startsWith("✅") ? "green" : "red",
             fontWeight: "bold",
+            fontSize: "15px",
           }}
         >
           {status}
