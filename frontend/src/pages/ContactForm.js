@@ -3,14 +3,13 @@ import { useLocation } from "react-router-dom";
 
 export default function BookTestDrive() {
   const location = useLocation();
-  const preselectedCarName = location.state?.carName || "";
   const preselectedCarId = location.state?.carId || "";
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
-    carId: preselectedCarId,
+    car: preselectedCarId,   // ⬅️ changed from carId → car
     preferredDate: "",
     message: "",
   });
@@ -19,11 +18,11 @@ export default function BookTestDrive() {
   const [status, setStatus] = useState(null);
 
   const API_BASE =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_API_URL) ||
-  process.env.REACT_APP_API_URL ||
-  "https://beseki-backend.onrender.com";
+    (typeof import.meta !== "undefined" &&
+      import.meta.env &&
+      import.meta.env.VITE_API_URL) ||
+    process.env.REACT_APP_API_URL ||
+    "https://beseki-backend.onrender.com";
 
   useEffect(() => {
     fetch(`${API_BASE}/api/cars`)
@@ -50,7 +49,7 @@ export default function BookTestDrive() {
       const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form),  // ⬅️ now sends "car" instead of "carId"
       });
 
       if (res.ok) {
@@ -59,7 +58,7 @@ export default function BookTestDrive() {
           name: "",
           email: "",
           phone: "",
-          carId: "",
+          car: "",
           preferredDate: "",
           message: "",
         });
@@ -85,7 +84,9 @@ export default function BookTestDrive() {
         background: "white",
       }}
     >
-      <h2 style={{ textAlign: "center", color: "#0d47a1" }}>Book a Test Drive</h2>
+      <h2 style={{ textAlign: "center", color: "#0d47a1" }}>
+        Book a Test Drive
+      </h2>
 
       <form
         onSubmit={handleSubmit}
@@ -97,7 +98,11 @@ export default function BookTestDrive() {
           value={form.name}
           onChange={handleChange}
           required
-          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
         />
 
         <input
@@ -107,7 +112,11 @@ export default function BookTestDrive() {
           value={form.email}
           onChange={handleChange}
           required
-          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
         />
 
         <input
@@ -116,15 +125,23 @@ export default function BookTestDrive() {
           value={form.phone}
           onChange={handleChange}
           required
-          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
         />
 
         <select
-          name="carId"
-          value={form.carId}
+          name="car"   // ⬅️ changed name to "car"
+          value={form.car}
           onChange={handleChange}
           required
-          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
         >
           <option value="">-- Select Car Model --</option>
           {cars.map((car) => (
@@ -140,7 +157,11 @@ export default function BookTestDrive() {
           value={form.preferredDate}
           onChange={handleChange}
           required
-          style={{ padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
         />
 
         <textarea

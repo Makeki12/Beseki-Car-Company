@@ -28,7 +28,7 @@ router.post("/", async (req, res) => {
       phone,
       preferredDate,
       message,
-      car: carId, // reference to Car
+      car: car._id, // reference to Car
     });
 
     await booking.save();
