@@ -5,12 +5,13 @@ export default function BookTestDrive() {
   const location = useLocation();
   const preselectedCarId = location.state?.carId || "";
 
+  // FORM STATE (fixed names to match backend)
   const [form, setForm] = useState({
-    name: "",
+    fullName: "",
     email: "",
     phone: "",
-    carId: preselectedCarId,
-    preferredDate: "",
+    car: preselectedCarId,
+    date: "",
     message: "",
   });
 
@@ -26,20 +27,18 @@ export default function BookTestDrive() {
     process.env.REACT_APP_API_URL ||
     "https://beseki-backend.onrender.com";
 
+  // Load cars
   useEffect(() => {
     fetch(`${API_BASE}/api/cars`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load cars");
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => setCars(data))
       .catch((err) => {
-        console.error("Error fetching cars:", err);
-        setStatus("⚠️ Unable to load cars. Please try again later.");
+        console.error("Error loading cars:", err);
+        setStatus("⚠️ Unable to load cars.");
       });
   }, [API_BASE]);
 
-  // Close dropdown if clicked outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -50,15 +49,17 @@ export default function BookTestDrive() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Update form values
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function selectCar(carId) {
-    setForm({ ...form, carId });
+    setForm({ ...form, car: carId });
     setDropdownOpen(false);
   }
 
+  // SUBMIT FORM FIXED
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus(null);
@@ -71,26 +72,26 @@ export default function BookTestDrive() {
       });
 
       if (res.ok) {
-        setStatus("✅ Booking saved successfully!");
+        setStatus("✅ Test Drive Booking Submitted!");
         setForm({
-          name: "",
+          fullName: "",
           email: "",
           phone: "",
-          carId: preselectedCarId,
-          preferredDate: "",
+          car: "",
+          date: "",
           message: "",
         });
       } else {
         const err = await res.json();
-        setStatus("❌ Error: " + (err.error || "Booking failed."));
+        setStatus("❌ " + (err.error || "Booking failed."));
       }
     } catch (err) {
+      setStatus("⚠️ Server Error. Try again later.");
       console.error("Booking error:", err);
-      setStatus("⚠️ Server error. Please try again later.");
     }
   }
 
-  const selectedCar = cars.find((c) => c._id === form.carId);
+  const selectedCar = cars.find((c) => c._id === form.car);
 
   return (
     <div
@@ -99,10 +100,8 @@ export default function BookTestDrive() {
         margin: "40px auto",
         padding: "30px",
         borderRadius: "14px",
+        background: "#fff",
         boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-        background: "#ffffff",
-        fontFamily: "Arial, sans-serif",
-        transition: "all 0.3s ease",
       }}
     >
       <h2
@@ -110,33 +109,21 @@ export default function BookTestDrive() {
           textAlign: "center",
           color: "#0d47a1",
           fontSize: "28px",
-          marginBottom: "25px",
+          marginBottom: "20px",
         }}
       >
         🚗 Book a Test Drive
       </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
-        }}
-      >
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+
         <input
-          name="name"
+          name="fullName"
           placeholder="Full Name"
-          value={form.name}
+          value={form.fullName}
           onChange={handleChange}
           required
-          style={{
-            padding: "14px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            fontSize: "15px",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
 
         <input
@@ -146,126 +133,70 @@ export default function BookTestDrive() {
           value={form.email}
           onChange={handleChange}
           required
-          style={{
-            padding: "14px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            fontSize: "15px",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
 
         <input
           name="phone"
-          placeholder="Phone"
+          placeholder="Phone Number"
           value={form.phone}
           onChange={handleChange}
           required
-          style={{
-            padding: "14px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            fontSize: "15px",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
 
-        {/* Custom dropdown */}
-        <div
-          ref={dropdownRef}
-          style={{ position: "relative", width: "100%" }}
-        >
+        {/* CAR DROPDOWN FIXED */}
+        <div ref={dropdownRef} style={{ position: "relative" }}>
           <div
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={{
-              padding: "14px",
-              borderRadius: "10px",
-              border: "1px solid #ccc",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "#f9f9f9",
-            }}
+            style={dropdownButton}
           >
             {selectedCar ? (
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                {selectedCar.images?.[0]?.url && (
-                  <img
-                    src={selectedCar.images[0].url}
-                    alt={selectedCar.name}
-                    style={{
-                      width: "40px",
-                      height: "30px",
-                      objectFit: "cover",
-                      borderRadius: "6px",
-                    }}
-                  />
-                )}
-                <span>{selectedCar.name} — Ksh {Number(selectedCar.price).toLocaleString()}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <img
+                  src={selectedCar.images?.[0]?.url}
+                  alt={selectedCar.name}
+                  style={{
+                    width: "45px",
+                    height: "35px",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+                <span>
+                  {selectedCar.name} — Ksh {Number(selectedCar.price).toLocaleString()}
+                </span>
               </div>
             ) : (
               <span style={{ color: "#999" }}>-- Select Car Model --</span>
             )}
-            <span
-              style={{
-                transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.3s",
-              }}
-            >
+
+            <span style={{ transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "0.3s" }}>
               ▼
             </span>
           </div>
 
           {dropdownOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "110%",
-                left: 0,
-                right: 0,
-                maxHeight: "250px",
-                overflowY: "auto",
-                border: "1px solid #ccc",
-                borderRadius: "10px",
-                background: "#fff",
-                zIndex: 100,
-                boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-                transition: "all 0.3s",
-              }}
-            >
+            <div style={dropdownList}>
               {cars.map((car) => (
                 <div
                   key={car._id}
                   onClick={() => selectCar(car._id)}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "12px",
-                    cursor: "pointer",
-                    background:
-                      car._id === form.carId ? "#e3f2fd" : "#fff",
-                    transition: "0.2s",
+                    ...dropdownItem,
+                    background: car._id === form.car ? "#e3f2fd" : "#fff",
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "#f0f0f0"}
-                  onMouseLeave={(e) => e.currentTarget.style.background =
-                    car._id === form.carId ? "#e3f2fd" : "#fff"}
                 >
-                  {car.images?.[0]?.url && (
-                    <img
-                      src={car.images[0].url}
-                      alt={car.name}
-                      style={{
-                        width: "50px",
-                        height: "35px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                      }}
-                    />
-                  )}
+                  <img
+                    src={car.images?.[0]?.url}
+                    alt={car.name}
+                    style={{
+                      width: "55px",
+                      height: "35px",
+                      objectFit: "cover",
+                      borderRadius: "6px",
+                    }}
+                  />
                   <span>{car.name} — Ksh {Number(car.price).toLocaleString()}</span>
                 </div>
               ))}
@@ -274,67 +205,85 @@ export default function BookTestDrive() {
         </div>
 
         <input
-          name="preferredDate"
+          name="date"
           type="date"
-          value={form.preferredDate}
+          value={form.date}
           onChange={handleChange}
           required
-          style={{
-            padding: "14px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            fontSize: "15px",
-            outline: "none",
-          }}
+          style={inputStyle}
         />
 
         <textarea
           name="message"
-          placeholder="Additional Message"
+          placeholder="Additional Message (optional)"
           value={form.message}
           onChange={handleChange}
-          style={{
-            padding: "14px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            minHeight: "100px",
-            fontSize: "15px",
-            outline: "none",
-          }}
+          style={{ ...inputStyle, minHeight: "100px" }}
         />
 
-        <button
-          type="submit"
-          style={{
-            padding: "14px",
-            background: "#0d47a1",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontSize: "16px",
-            transition: "0.3s",
-          }}
-          onMouseOver={(e) => (e.target.style.background = "#0941a3")}
-          onMouseOut={(e) => (e.target.style.background = "#0d47a1")}
-        >
+        <button type="submit" style={submitButton}>
           Book Test Drive
         </button>
       </form>
 
       {status && (
-        <p
-          style={{
-            marginTop: "20px",
-            textAlign: "center",
-            color: status.startsWith("✅") ? "green" : "red",
-            fontWeight: "bold",
-            fontSize: "15px",
-          }}
-        >
+        <p style={{ marginTop: "20px", textAlign: "center", fontWeight: "bold", color: status.startsWith("✅") ? "green" : "red" }}>
           {status}
         </p>
       )}
     </div>
   );
 }
+
+// ---------- STYLES ----------
+const inputStyle = {
+  padding: "14px",
+  borderRadius: "10px",
+  border: "1px solid #ccc",
+  fontSize: "15px",
+  outline: "none",
+};
+
+const dropdownButton = {
+  padding: "14px",
+  borderRadius: "10px",
+  border: "1px solid #ccc",
+  cursor: "pointer",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  background: "#f9f9f9",
+};
+
+const dropdownList = {
+  position: "absolute",
+  top: "110%",
+  left: 0,
+  right: 0,
+  maxHeight: "260px",
+  overflowY: "auto",
+  border: "1px solid #ccc",
+  borderRadius: "10px",
+  background: "#fff",
+  zIndex: 100,
+  boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
+};
+
+const dropdownItem = {
+  display: "flex",
+  gap: "10px",
+  padding: "12px",
+  cursor: "pointer",
+  transition: "0.2s",
+};
+
+const submitButton = {
+  padding: "14px",
+  background: "#0d47a1",
+  color: "white",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontSize: "16px",
+};
+
