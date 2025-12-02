@@ -85,8 +85,12 @@ function FeaturedCars() {
                   borderRadius: "15px",
                   boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+                  transition:
+                    "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
                   cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-5px)";
@@ -109,8 +113,12 @@ function FeaturedCars() {
                       objectFit: "cover",
                       transition: "transform 0.3s ease-in-out",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "scale(1.05)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "scale(1)")
+                    }
                   />
                 ) : (
                   <div
@@ -129,22 +137,64 @@ function FeaturedCars() {
                   </div>
                 )}
 
-                {/* Gradient overlay for name and price */}
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    width: "100%",
-                    padding: "15px",
-                    background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
-                    color: "white",
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: "1.2rem" }}>{car.name}</h3>
-                  <p style={{ margin: "5px 0", fontWeight: "bold" }}>
+                {/* Card content below image */}
+                <div style={{ padding: "20px", textAlign: "left" }}>
+                  <h3
+                    style={{
+                      fontSize: "1.4rem",
+                      marginBottom: "10px",
+                      fontWeight: "600",
+                      color: "#0d47a1",
+                    }}
+                  >
+                    {car.name}
+                  </h3>
+                  <p
+                    style={{
+                      fontWeight: "bold",
+                      color: "#ff5722",
+                      fontSize: "1.1rem",
+                      marginBottom: "10px",
+                    }}
+                  >
                     Ksh {Number(car.price).toLocaleString()}
                   </p>
+                  <p
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#555",
+                      marginBottom: "15px",
+                      minHeight: "50px",
+                    }}
+                  >
+                    {car.description?.length > 60
+                      ? car.description.substring(0, 60) + "..."
+                      : car.description}
+                  </p>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Star rating */}
+                    <div style={{ color: "#ffb400" }}>⭐⭐⭐⭐☆</div>
+
+                    {/* View Details button */}
+                    <Link
+                      to={`/car/${car._id|| car.id}`}
+                      style={{
+                        display: "inline-block",
+                        padding: "10px 18px",
+                        background: "#0d47a1",
+                        color: "#fff",
+                        borderRadius: "8px",
+                        textDecoration: "none",
+                        fontWeight: "bold",
+                        transition: "0.3s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#0941a3")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#0d47a1")}
+                    >
+                      View Details →
+                    </Link>
+                  </div>
                 </div>
 
                 {/* New badge */}
@@ -166,44 +216,6 @@ function FeaturedCars() {
                     New
                   </span>
                 )}
-
-                <div style={{ padding: "20px", textAlign: "left" }}>
-                  <p
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "#555",
-                      marginBottom: "15px",
-                      minHeight: "50px",
-                    }}
-                  >
-                    {car.description?.length > 60
-                      ? car.description.substring(0, 60) + "..."
-                      : car.description}
-                  </p>
-
-                  {/* Star rating placeholder */}
-                  <div style={{ marginBottom: "10px", color: "#ffb400" }}>
-                    ⭐⭐⭐⭐☆ {/* Replace with dynamic rating if available */}
-                  </div>
-
-                  <Link
-                    to={`/car/${car._id || car.id}`}
-                    style={{
-                      display: "inline-block",
-                      padding: "10px 18px",
-                      background: "#0d47a1",
-                      color: "#fff",
-                      borderRadius: "8px",
-                      textDecoration: "none",
-                      fontWeight: "bold",
-                      transition: "0.3s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#0941a3")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#0d47a1")}
-                  >
-                    View Details →
-                  </Link>
-                </div>
               </div>
             );
           })}
