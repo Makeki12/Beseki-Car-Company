@@ -193,7 +193,15 @@ export default function AdminDashboard() {
 
   // ---------- UI ----------
   return (
-    <div style={{ maxWidth: "1100px", margin: "20px auto", padding: "20px" }}>
+    <div
+      style={{
+        maxWidth: "1100px",
+        margin: "20px auto",
+        padding: "20px",
+        overflowX: "hidden", // ✅ prevent horizontal scroll
+        boxSizing: "border-box", // ✅ fix alignment with padding
+      }}
+    >
       <h2 style={{ textAlign: "center" }}>Admin Dashboard</h2>
 
       <button
@@ -223,6 +231,7 @@ export default function AdminDashboard() {
           padding: "15px",
           borderRadius: "8px",
           background: "#fafafa",
+          overflowX: "hidden", // ✅ prevent wide content
         }}
       >
         <input
@@ -250,14 +259,20 @@ export default function AdminDashboard() {
         <input type="file" accept="image/*" multiple onChange={handleImageChange} />
 
         {preview.length > 0 && (
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              flexWrap: "wrap",
+              overflowX: "auto", // ✅ allow horizontal scroll for preview images only
+            }}
+          >
             {preview.map((src, idx) => (
               <img
                 key={idx}
                 src={src}
                 alt="preview"
-                width="100"
-                style={{ borderRadius: "5px" }}
+                style={{ borderRadius: "5px", maxWidth: "150px", height: "auto" }}
               />
             ))}
           </div>
@@ -294,7 +309,7 @@ export default function AdminDashboard() {
         )}
       </form>
 
-      {/* ---------- Cars Section ---------- */}
+      {/* Cars Section */}
       <h3>Cars in Showroom</h3>
       {cars.length === 0 ? (
         <p>No cars available.</p>
@@ -317,14 +332,12 @@ export default function AdminDashboard() {
                   padding: "15px",
                   background: "#fff",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  overflowX: "hidden", // ✅ prevent overflow
                 }}
               >
-                <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>
-                  {car.name}
-                </h4>
+                <h4 style={{ color: "#1976d2", marginBottom: "8px" }}>{car.name}</h4>
                 <p>
-                  <strong>Price:</strong> Ksh{" "}
-                  {Number(car.price).toLocaleString("en-KE")}
+                  <strong>Price:</strong> Ksh {Number(car.price).toLocaleString("en-KE")}
                 </p>
                 <p style={{ fontSize: "0.9em" }}>{car.description}</p>
 
@@ -351,6 +364,7 @@ export default function AdminDashboard() {
                             borderRadius: "8px",
                             maxHeight: "150px",
                             width: "100%",
+                            height: "auto", // ✅ responsive
                             objectFit: "cover",
                           }}
                         />
@@ -392,7 +406,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ---------- Bookings Section ---------- */}
+      {/* Bookings Section */}
       <h3 style={{ marginTop: "40px" }}>Test Drive Bookings</h3>
       <input
         type="text"
@@ -405,6 +419,7 @@ export default function AdminDashboard() {
           marginBottom: "20px",
           border: "1px solid #ccc",
           borderRadius: "5px",
+          boxSizing: "border-box",
         }}
       />
 
@@ -427,6 +442,7 @@ export default function AdminDashboard() {
                 padding: "15px",
                 background: "#fff",
                 boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                overflowX: "hidden", // ✅ prevent overflow
               }}
             >
               <h4 style={{ color: "#1976d2" }}>{booking.car?.name || "Unknown Car"}</h4>
@@ -443,7 +459,7 @@ export default function AdminDashboard() {
                 <strong>Date:</strong> {new Date(booking.date).toLocaleString()}
               </p>
 
-              <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+              <div style={{ marginTop: "10px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 <a
                   href={`tel:${booking.phone}`}
                   style={{
