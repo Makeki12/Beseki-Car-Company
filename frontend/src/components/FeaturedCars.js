@@ -45,7 +45,7 @@ function FeaturedCars() {
       id="cars"
       style={{
         padding: "60px 20px",
-        backgroundColor: "#f4f6f8",
+        background: "linear-gradient(135deg, #f4f6f8 0%, #e0e7ff 100%)",
         textAlign: "center",
       }}
     >
@@ -80,11 +80,12 @@ function FeaturedCars() {
               <div
                 key={car._id}
                 style={{
+                  position: "relative",
                   backgroundColor: "#fff",
                   borderRadius: "15px",
                   boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  transition: "transform 0.3s, box-shadow 0.3s",
+                  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
@@ -106,8 +107,10 @@ function FeaturedCars() {
                       width: "100%",
                       height: "200px",
                       objectFit: "cover",
-                      transition: "transform 0.3s",
+                      transition: "transform 0.3s ease-in-out",
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />
                 ) : (
                   <div
@@ -126,27 +129,45 @@ function FeaturedCars() {
                   </div>
                 )}
 
-                <div style={{ padding: "20px", textAlign: "left" }}>
-                  <h3
-                    style={{
-                      fontSize: "1.4rem",
-                      marginBottom: "10px",
-                      fontWeight: "600",
-                      color: "#0d47a1",
-                    }}
-                  >
-                    {car.name}
-                  </h3>
-                  <p
-                    style={{
-                      fontWeight: "bold",
-                      color: "#ff5722",
-                      fontSize: "1.1rem",
-                      marginBottom: "10px",
-                    }}
-                  >
+                {/* Gradient overlay for name and price */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    padding: "15px",
+                    background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
+                    color: "white",
+                  }}
+                >
+                  <h3 style={{ margin: 0, fontSize: "1.2rem" }}>{car.name}</h3>
+                  <p style={{ margin: "5px 0", fontWeight: "bold" }}>
                     Ksh {Number(car.price).toLocaleString()}
                   </p>
+                </div>
+
+                {/* New badge */}
+                {car.isNew && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "10px",
+                      background: "#ff5722",
+                      color: "white",
+                      padding: "5px 10px",
+                      borderRadius: "5px",
+                      fontSize: "0.8rem",
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    New
+                  </span>
+                )}
+
+                <div style={{ padding: "20px", textAlign: "left" }}>
                   <p
                     style={{
                       fontSize: "0.95rem",
@@ -160,6 +181,11 @@ function FeaturedCars() {
                       : car.description}
                   </p>
 
+                  {/* Star rating placeholder */}
+                  <div style={{ marginBottom: "10px", color: "#ffb400" }}>
+                    ⭐⭐⭐⭐☆ {/* Replace with dynamic rating if available */}
+                  </div>
+
                   <Link
                     to={`/car/${car._id || car.id}`}
                     style={{
@@ -172,12 +198,8 @@ function FeaturedCars() {
                       fontWeight: "bold",
                       transition: "0.3s",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "#0941a3")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "#0d47a1")
-                    }
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#0941a3")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#0d47a1")}
                   >
                     View Details →
                   </Link>
