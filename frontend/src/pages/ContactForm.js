@@ -9,7 +9,7 @@ export default function BookTestDrive() {
     name: "",
     email: "",
     phone: "",
-    car: preselectedCarId,   // ⬅️ changed from carId → car
+    carId: preselectedCarId, // preselect car if user clicked from CarDetails
     preferredDate: "",
     message: "",
   });
@@ -49,7 +49,7 @@ export default function BookTestDrive() {
       const res = await fetch(`${API_BASE}/api/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),  // ⬅️ now sends "car" instead of "carId"
+        body: JSON.stringify(form),
       });
 
       if (res.ok) {
@@ -58,7 +58,7 @@ export default function BookTestDrive() {
           name: "",
           email: "",
           phone: "",
-          car: "",
+          carId: preselectedCarId, // keep the preselected car
           preferredDate: "",
           message: "",
         });
@@ -75,22 +75,29 @@ export default function BookTestDrive() {
   return (
     <div
       style={{
-        maxWidth: "500px",
+        maxWidth: "550px",
         margin: "50px auto",
-        padding: "20px",
+        padding: "30px",
         border: "1px solid #ddd",
-        borderRadius: "10px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-        background: "white",
+        borderRadius: "12px",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+        background: "#fff",
+        fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2 style={{ textAlign: "center", color: "#0d47a1" }}>
-        Book a Test Drive
+      <h2
+        style={{
+          textAlign: "center",
+          color: "#0d47a1",
+          marginBottom: "25px",
+        }}
+      >
+        🚗 Book a Test Drive
       </h2>
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
       >
         <input
           name="name"
@@ -99,9 +106,10 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
+            fontSize: "14px",
           }}
         />
 
@@ -113,9 +121,10 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
+            fontSize: "14px",
           }}
         />
 
@@ -126,26 +135,39 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
+            fontSize: "14px",
           }}
         />
 
         <select
-          name="car"   // ⬅️ changed name to "car"
-          value={form.car}
+          name="carId"
+          value={form.carId}
           onChange={handleChange}
           required
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
+            fontSize: "14px",
+            backgroundColor: "#f9f9f9",
+            color: "#333",
           }}
         >
-          <option value="">-- Select Car Model --</option>
+          <option value="" disabled>
+            -- Select Car Model --
+          </option>
           {cars.map((car) => (
-            <option key={car._id} value={car._id}>
+            <option
+              key={car._id}
+              value={car._id}
+              style={{
+                fontWeight: car._id === preselectedCarId ? "bold" : "normal",
+                backgroundColor: car._id === preselectedCarId ? "#e3f2fd" : "",
+              }}
+            >
               {car.name} — Ksh {Number(car.price).toLocaleString()}
             </option>
           ))}
@@ -158,9 +180,10 @@ export default function BookTestDrive() {
           onChange={handleChange}
           required
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
+            fontSize: "14px",
           }}
         />
 
@@ -170,24 +193,28 @@ export default function BookTestDrive() {
           value={form.message}
           onChange={handleChange}
           style={{
-            padding: "10px",
-            borderRadius: "5px",
+            padding: "12px",
+            borderRadius: "8px",
             border: "1px solid #ccc",
-            minHeight: "80px",
+            minHeight: "100px",
+            fontSize: "14px",
           }}
         />
 
         <button
           type="submit"
           style={{
-            padding: "10px",
+            padding: "12px",
             background: "#0d47a1",
             color: "white",
             border: "none",
-            borderRadius: "5px",
+            borderRadius: "8px",
             cursor: "pointer",
             fontSize: "16px",
+            transition: "0.3s",
           }}
+          onMouseOver={(e) => (e.target.style.background = "#0941a3")}
+          onMouseOut={(e) => (e.target.style.background = "#0d47a1")}
         >
           Book Test Drive
         </button>
@@ -196,7 +223,7 @@ export default function BookTestDrive() {
       {status && (
         <p
           style={{
-            marginTop: "15px",
+            marginTop: "20px",
             textAlign: "center",
             color: status.startsWith("✅") ? "green" : "red",
             fontWeight: "bold",
