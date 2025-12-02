@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "@babel/plugin-transform-class-properties": "^7.27.1",
+    "@babel/plugin-transform-optional-chaining": "^7.28.5",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "eslint": "^9.39.1",
+    "rimraf": "^6.1.2",
+    "svgo": "^4.0.0"
+  }
+}
