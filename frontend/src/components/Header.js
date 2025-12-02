@@ -22,7 +22,7 @@ function Header() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      navigate(`/?search=${encodeURIComponent(searchTerm.trim())}`);
       setSearchTerm("");
       setMenuOpen(false);
     }
@@ -51,10 +51,10 @@ function Header() {
           width: "100%",
         }}
       >
-        {/* Modernized Logo */}
+        {/* LOGO */}
         <h1
           style={{
-            fontSize: "1.7rem",
+            fontSize: "1.8rem",
             fontWeight: "800",
             letterSpacing: "1px",
             color: "#0d47a1",
@@ -65,7 +65,7 @@ function Header() {
           <span style={{ color: "#1976d2" }}>Beseki</span> Motors
         </h1>
 
-        {/* Hamburger */}
+        {/* HAMBURGER BUTTON */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           style={{
@@ -81,7 +81,7 @@ function Header() {
           ☰
         </button>
 
-        {/* Navigation & Search */}
+        {/* NAVIGATION */}
         <nav
           style={{
             display: "flex",
@@ -90,7 +90,6 @@ function Header() {
           }}
           className={`nav-menu ${menuOpen ? "open" : ""}`}
         >
-          {/* Navigation Links */}
           <div
             style={{
               display: "flex",
@@ -105,7 +104,7 @@ function Header() {
             {isAdmin && <Link to="/admin/dashboard" style={linkStyle}>Dashboard</Link>}
           </div>
 
-          {/* Search bar */}
+          {/* SEARCH BAR */}
           <form
             onSubmit={handleSearch}
             style={{
@@ -144,14 +143,13 @@ function Header() {
         </nav>
       </div>
 
-      {/* Responsive Styles */}
+      {/* RESPONSIVE STYLES */}
       <style>
         {`
           @media (max-width: 900px) {
             .hamburger-btn {
               display: block;
             }
-
             .nav-menu {
               display: none;
               flex-direction: column;
@@ -161,24 +159,20 @@ function Header() {
               background: white;
               border-top: 1px solid #ddd;
             }
-
             .nav-menu.open {
               display: flex;
             }
-
             .nav-links {
               flex-direction: column;
               width: 100%;
               text-align: center;
               gap: 10px;
             }
-
             form {
               width: 90%;
               margin: 0 auto;
               justify-content: center;
             }
-
             input {
               width: 70% !important;
             }

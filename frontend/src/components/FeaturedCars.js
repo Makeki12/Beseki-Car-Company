@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function FeaturedCars() {
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const location = useLocation();
   const BASE_URL = "https://beseki-car-company.onrender.com";
+
+  // Read search text from URL ?search=something
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get("search")?.toLowerCase() || "";
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -24,6 +29,15 @@ function FeaturedCars() {
     };
     fetchCars();
   }, []);
+
+  // --- SEARCH FILTER ---
+  const filteredCars = cars.filter((car) => {
+    const text =
+      `${car.name} ${car.make || ""} ${car.model || ""} ${car.year || ""} ${car.description || ""}`
+        .toLowerCase();
+
+    return text.includes(searchQuery);
+  });
 
   if (loading)
     return (
@@ -60,19 +74,26 @@ function FeaturedCars() {
         🚘 Featured Cars
       </h2>
 
-      {cars.length === 0 ? (
-        <p>No cars available at the moment.</p>
+      {/* Show search results message */}
+      {searchQuery && (
+        <p style={{ marginBottom: "20px", color: "#0d47a1", fontSize: "1.1rem" }}>
+          Showing results for: <strong>{searchQuery}</strong>
+        </p>
+      )}
+
+      {filteredCars.length === 0 ? (
+        <p>No cars match your search.</p>
       ) : (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "25px",
-            maxWidth: "1200px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "30px",
+            maxWidth: "1300px",
             margin: "0 auto",
           }}
         >
-          {cars.map((car) => {
+          {filteredCars.map((car) => {
             const imageUrl =
               car.images && car.images.length > 0 ? car.images[0].url : null;
 
@@ -85,23 +106,20 @@ function FeaturedCars() {
                   borderRadius: "15px",
                   boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
                   overflow: "hidden",
-                  transition:
-                    "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
+                  transition: "transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out",
                   cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  minHeight: "400px",
+                  minHeight: "420px",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 15px 25px rgba(0,0,0,0.2)";
+                  e.currentTarget.style.transform = "translateY(-6px)";
+                  e.currentTarget.style.boxShadow = "0 15px 30px rgba(0,0,0,0.15)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 10px 20px rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = "0 10px 20px rgba(0,0,0,0.1)";
                 }}
               >
                 {imageUrl ? (
@@ -112,14 +130,7 @@ function FeaturedCars() {
                       width: "100%",
                       height: "200px",
                       objectFit: "cover",
-                      transition: "transform 0.3s ease-in-out",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = "scale(1.05)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
                   />
                 ) : (
                   <div
@@ -159,6 +170,7 @@ function FeaturedCars() {
                   >
                     Ksh {Number(car.price).toLocaleString()}
                   </p>
+
                   <p
                     style={{
                       fontSize: "0.95rem",
@@ -180,14 +192,12 @@ function FeaturedCars() {
                       flexWrap: "wrap",
                     }}
                   >
-                    {/* Star rating */}
                     <div style={{ color: "#ffb400", marginBottom: "5px" }}>
                       ⭐⭐⭐⭐☆
                     </div>
 
-                    {/* View Details button */}
                     <Link
-                      to={`/car/${car._id || car.id}`}
+                      to={`/car/${car._id}`}
                       style={{
                         display: "inline-block",
                         padding: "10px 18px",
@@ -211,7 +221,6 @@ function FeaturedCars() {
                   </div>
                 </div>
 
-                {/* New badge */}
                 {car.isNew && (
                   <span
                     style={{
@@ -224,7 +233,6 @@ function FeaturedCars() {
                       borderRadius: "5px",
                       fontSize: "0.8rem",
                       fontWeight: "bold",
-                      textTransform: "uppercase",
                     }}
                   >
                     New
@@ -236,23 +244,11 @@ function FeaturedCars() {
         </div>
       )}
 
-      {/* Responsive adjustments */}
       <style>
         {`
           @media (max-width: 768px) {
-            #cars div[style*='grid-template-columns'] {
-              grid-template-columns: 1fr !important;
-            }
             #cars img {
               height: 180px !important;
-            }
-          }
-          @media (max-width: 480px) {
-            #cars h3 {
-              font-size: 1.2rem !important;
-            }
-            #cars p {
-              font-size: 0.9rem !important;
             }
           }
         `}
