@@ -45,15 +45,16 @@ function FeaturedCars() {
       id="cars"
       style={{
         padding: "60px 20px",
-        backgroundColor: "#f9f9f9",
+        backgroundColor: "#f4f6f8",
         textAlign: "center",
       }}
     >
       <h2
         style={{
-          fontSize: "2.5rem",
-          marginBottom: "40px",
+          fontSize: "2.8rem",
+          marginBottom: "50px",
           color: "#0d47a1",
+          fontWeight: "bold",
         }}
       >
         🚘 Featured Cars
@@ -72,21 +73,29 @@ function FeaturedCars() {
           }}
         >
           {cars.map((car) => {
-            // ✅ Get first image URL safely
             const imageUrl =
-              car.images && car.images.length > 0
-                ? car.images[0].url // <-- Access the URL from object
-                : null;
+              car.images && car.images.length > 0 ? car.images[0].url : null;
 
             return (
               <div
                 key={car._id}
                 style={{
                   backgroundColor: "#fff",
-                  borderRadius: "12px",
-                  boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
-                  padding: "20px",
+                  borderRadius: "15px",
+                  boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+                  overflow: "hidden",
                   transition: "transform 0.3s, box-shadow 0.3s",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-5px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 15px 25px rgba(0,0,0,0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 10px 20px rgba(0,0,0,0.1)";
                 }}
               >
                 {imageUrl ? (
@@ -96,9 +105,8 @@ function FeaturedCars() {
                     style={{
                       width: "100%",
                       height: "200px",
-                      borderRadius: "10px",
                       objectFit: "cover",
-                      marginBottom: "15px",
+                      transition: "transform 0.3s",
                     }}
                   />
                 ) : (
@@ -106,59 +114,74 @@ function FeaturedCars() {
                     style={{
                       width: "100%",
                       height: "200px",
-                      borderRadius: "10px",
                       background: "#ddd",
-                      marginBottom: "15px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       color: "#666",
+                      fontWeight: "bold",
                     }}
                   >
-                    No Image Available
+                    No Image
                   </div>
                 )}
 
-                <h3 style={{ margin: "10px 0", fontSize: "1.3rem" }}>
-                  {car.name}
-                </h3>
-                <p
-                  style={{
-                    fontWeight: "bold",
-                    color: "#0d47a1",
-                    fontSize: "1.1rem",
-                    margin: "5px 0",
-                  }}
-                >
-                  ${car.price}
-                </p>
-                <p
-                  style={{
-                    fontSize: "0.95rem",
-                    color: "#555",
-                    marginBottom: "15px",
-                    minHeight: "50px",
-                  }}
-                >
-                  {car.description?.length > 60
-                    ? car.description.substring(0, 60) + "..."
-                    : car.description}
-                </p>
+                <div style={{ padding: "20px", textAlign: "left" }}>
+                  <h3
+                    style={{
+                      fontSize: "1.4rem",
+                      marginBottom: "10px",
+                      fontWeight: "600",
+                      color: "#0d47a1",
+                    }}
+                  >
+                    {car.name}
+                  </h3>
+                  <p
+                    style={{
+                      fontWeight: "bold",
+                      color: "#ff5722",
+                      fontSize: "1.1rem",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    Ksh {Number(car.price).toLocaleString()}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "#555",
+                      marginBottom: "15px",
+                      minHeight: "50px",
+                    }}
+                  >
+                    {car.description?.length > 60
+                      ? car.description.substring(0, 60) + "..."
+                      : car.description}
+                  </p>
 
-                <Link
-                  to={`/car/${car._id || car.id}`}
-                  style={{
-                    display: "inline-block",
-                    padding: "10px 18px",
-                    background: "#0d47a1",
-                    color: "#fff",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    transition: "0.3s",
-                  }}
-                >
-                  View Details →
-                </Link>
+                  <Link
+                    to={`/car/${car._id}`}
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 18px",
+                      background: "#0d47a1",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      textDecoration: "none",
+                      fontWeight: "bold",
+                      transition: "0.3s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#0941a3")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "#0d47a1")
+                    }
+                  >
+                    View Details →
+                  </Link>
+                </div>
               </div>
             );
           })}
