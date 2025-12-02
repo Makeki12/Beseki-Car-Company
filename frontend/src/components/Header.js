@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 function Header() {
   const token = localStorage.getItem("token");
@@ -16,37 +16,78 @@ function Header() {
   }
 
   return (
-    <header style={{ backgroundColor: "#0d47a1", color: "white", padding: "20px" }}>
-      <h1>Beseki Car Company Limited</h1>
-      <nav style={{ marginTop: "10px" }}>
+    <header
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+        backdropFilter: "blur(10px)",
+        backgroundColor: "rgba(13, 71, 161, 0.85)",
+        color: "white",
+        padding: "15px 20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Beseki Car Company</h1>
+
+      <nav style={{ display: "flex", alignItems: "center" }}>
         <Link
           to="/"
-          style={{ color: "white", marginRight: "20px", textDecoration: "none" }}
+          style={{
+            color: "white",
+            marginRight: "20px",
+            textDecoration: "none",
+            transition: "all 0.3s",
+          }}
+          onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
+          onMouseLeave={(e) => (e.target.style.color = "white")}
         >
           Home
         </Link>
+
         <Link
           to="/book-test-drive"
-          style={{ color: "white", marginRight: "20px", textDecoration: "none" }}
+          style={{
+            color: "white",
+            marginRight: "20px",
+            textDecoration: "none",
+            transition: "all 0.3s",
+          }}
+          onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
+          onMouseLeave={(e) => (e.target.style.color = "white")}
         >
           Book Test Drive
         </Link>
 
-        {/* If NOT logged in as admin → show Admin Login */}
         {!isAdmin && (
           <Link
             to="/admin/login"
-            style={{ color: "white", marginRight: "20px", textDecoration: "none" }}
+            style={{
+              color: "white",
+              marginRight: "20px",
+              textDecoration: "none",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
+            onMouseLeave={(e) => (e.target.style.color = "white")}
           >
             Admin Login
           </Link>
         )}
 
-        {/* If logged in as admin → show Dashboard */}
         {isAdmin && (
           <Link
             to="/admin/dashboard"
-            style={{ color: "white", marginRight: "20px", textDecoration: "none" }}
+            style={{
+              color: "white",
+              marginRight: "20px",
+              textDecoration: "none",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
+            onMouseLeave={(e) => (e.target.style.color = "white")}
           >
             Admin Dashboard
           </Link>
