@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import jwtDecode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 
 function Header() {
   const token = localStorage.getItem("token");
