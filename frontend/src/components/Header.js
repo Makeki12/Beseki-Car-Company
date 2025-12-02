@@ -18,83 +18,38 @@ function Header() {
   return (
     <header
       style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        backdropFilter: "blur(10px)",
-        backgroundColor: "rgba(13, 71, 161, 0.85)",
+        background: "linear-gradient(90deg, #0d47a1 0%, #1976d2 100%)",
         color: "white",
         padding: "15px 20px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+        boxShadow: "0 4px 10px rgba(0,0,0,0.2)"
       }}
     >
-      <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Beseki Car Company</h1>
-
-      <nav style={{ display: "flex", alignItems: "center" }}>
-        <Link
-          to="/"
-          style={{
-            color: "white",
-            marginRight: "20px",
-            textDecoration: "none",
-            transition: "all 0.3s",
-          }}
-          onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
-          onMouseLeave={(e) => (e.target.style.color = "white")}
-        >
-          Home
-        </Link>
-
-        <Link
-          to="/book-test-drive"
-          style={{
-            color: "white",
-            marginRight: "20px",
-            textDecoration: "none",
-            transition: "all 0.3s",
-          }}
-          onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
-          onMouseLeave={(e) => (e.target.style.color = "white")}
-        >
-          Book Test Drive
-        </Link>
-
-        {!isAdmin && (
-          <Link
-            to="/admin/login"
-            style={{
-              color: "white",
-              marginRight: "20px",
-              textDecoration: "none",
-              transition: "all 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
-            onMouseLeave={(e) => (e.target.style.color = "white")}
-          >
-            Admin Login
-          </Link>
-        )}
-
-        {isAdmin && (
-          <Link
-            to="/admin/dashboard"
-            style={{
-              color: "white",
-              marginRight: "20px",
-              textDecoration: "none",
-              transition: "all 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.color = "#ffca28")}
-            onMouseLeave={(e) => (e.target.style.color = "white")}
-          >
-            Admin Dashboard
-          </Link>
-        )}
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+        Beseki Car Company
+      </h1>
+      <nav>
+        <Link to="/" style={linkStyle}>Home</Link>
+        <Link to="/book-test-drive" style={linkStyle}>Book Test Drive</Link>
+        {!isAdmin && <Link to="/admin/login" style={linkStyle}>Admin Login</Link>}
+        {isAdmin && <Link to="/admin/dashboard" style={linkStyle}>Dashboard</Link>}
       </nav>
     </header>
   );
 }
+
+const linkStyle = {
+  color: "white",
+  marginLeft: "20px",
+  textDecoration: "none",
+  fontWeight: "500",
+  transition: "0.3s",
+  padding: "5px 10px",
+};
 
 export default Header;
