@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {jwtDecode} from "jwt-decode";
 
 function Header() {
@@ -16,6 +16,17 @@ function Header() {
   }
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+      setMenuOpen(false);
+    }
+  };
 
   return (
     <header
@@ -37,6 +48,7 @@ function Header() {
           flexWrap: "wrap",
           maxWidth: "1200px",
           margin: "0 auto",
+          width: "100%",
         }}
       >
         <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
@@ -64,28 +76,74 @@ function Header() {
             display: "flex",
             flexDirection: "row",
             flexWrap: "wrap",
-            gap: "10px",
-            justifyContent: "center",
             alignItems: "center",
-            width: menuOpen ? "100%" : "auto",
+            gap: "15px",
+            justifyContent: "flex-end",
+            width: "100%",
           }}
         >
-          <Link to="/" style={linkStyle}>
-            Home
-          </Link>
-          <Link to="/book-test-drive" style={linkStyle}>
-            Book Test Drive
-          </Link>
-          {!isAdmin && (
-            <Link to="/admin/login" style={linkStyle}>
-              Admin Login
+          <div
+            style={{
+              display: "flex",
+              gap: "15px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <Link to="/" style={linkStyle}>
+              Home
             </Link>
-          )}
-          {isAdmin && (
-            <Link to="/admin/dashboard" style={linkStyle}>
-              Dashboard
+            <Link to="/book-test-drive" style={linkStyle}>
+              Book Test Drive
             </Link>
-          )}
+            {!isAdmin && (
+              <Link to="/admin/login" style={linkStyle}>
+                Admin Login
+              </Link>
+            )}
+            {isAdmin && (
+              <Link to="/admin/dashboard" style={linkStyle}>
+                Dashboard
+              </Link>
+            )}
+          </div>
+
+          {/* Search form */}
+          <form
+            onSubmit={handleSearch}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "auto",
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Search car..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                padding: "5px 10px",
+                borderRadius: "5px 0 0 5px",
+                border: "none",
+                outline: "none",
+                width: "200px",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: "5px 10px",
+                borderRadius: "0 5px 5px 0",
+                border: "none",
+                background: "#0941a3",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              🔍
+            </button>
+          </form>
         </nav>
       </div>
 
@@ -101,12 +159,24 @@ function Header() {
               display: ${menuOpen ? "flex" : "none"};
               width: 100%;
               margin-top: 10px;
+              align-items: center;
             }
             nav a {
               margin-left: 0 !important;
               padding: 10px 0;
               width: 100%;
               text-align: center;
+            }
+            form {
+              width: 100%;
+              margin-top: 10px;
+              justify-content: center;
+            }
+            input {
+              width: 70%;
+            }
+            button {
+              width: 30%;
             }
           }
         `}
@@ -117,7 +187,6 @@ function Header() {
 
 const linkStyle = {
   color: "white",
-  marginLeft: "20px",
   textDecoration: "none",
   fontWeight: "500",
   transition: "0.3s",

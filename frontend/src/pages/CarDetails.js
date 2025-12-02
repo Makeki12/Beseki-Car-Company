@@ -29,7 +29,11 @@ function CarDetails() {
         const data = await res.json();
         setCar(data);
       } catch (err) {
-        setError(err.message.includes("CORS") ? "CORS issue: check backend allows requests from this frontend domain." : err.message);
+        setError(
+          err.message.includes("CORS")
+            ? "CORS issue: check backend allows requests from this frontend domain."
+            : err.message
+        );
       }
     };
 
@@ -56,15 +60,38 @@ function CarDetails() {
 
   if (error) {
     return (
-      <div style={{ textAlign: "center", color: "red", padding: "50px", fontSize: "18px" }}>
+      <div
+        style={{
+          textAlign: "center",
+          color: "red",
+          padding: "50px",
+          fontSize: "18px",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
         <p>⚠️ {error}</p>
-        <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>← Back to Cars</Link>
+        <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>
+          ← Back to Cars
+        </Link>
       </div>
     );
   }
 
   if (!car) {
-    return <p style={{ textAlign: "center", marginTop: "20px", fontSize: "18px" }}>Loading car details...</p>;
+    return (
+      <p
+        style={{
+          textAlign: "center",
+          marginTop: "20px",
+          fontSize: "18px",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
+        Loading car details...
+      </p>
+    );
   }
 
   return (
@@ -76,14 +103,32 @@ function CarDetails() {
         borderRadius: "12px",
         boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
         background: "#fff",
+        overflowX: "hidden", // ✅ prevent horizontal scroll
+        boxSizing: "border-box",
       }}
     >
       <h2 style={{ marginBottom: "20px", color: "#0d47a1", textAlign: "center" }}>{car.name}</h2>
 
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "center" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "20px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
         {/* Image gallery */}
         {car.images && car.images.length > 0 ? (
-          <div style={{ flex: "1", display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+          <div
+            style={{
+              flex: "1",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
+              justifyContent: "center",
+              overflowX: "hidden",
+            }}
+          >
             {car.images.map((img, idx) => (
               <img
                 key={idx}
@@ -96,6 +141,7 @@ function CarDetails() {
                   objectFit: "cover",
                   cursor: "pointer",
                   transition: "transform 0.2s",
+                  boxSizing: "border-box",
                 }}
                 onClick={() => setFullscreenIndex(idx)}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
@@ -109,7 +155,9 @@ function CarDetails() {
 
         {/* Car details */}
         <div style={{ flex: "1", minWidth: "250px" }}>
-          <p style={{ fontSize: "18px" }}><strong>💲 Price:</strong> Ksh {Number(car.price).toLocaleString() || "N/A"}</p>
+          <p style={{ fontSize: "18px" }}>
+            <strong>💲 Price:</strong> Ksh {Number(car.price).toLocaleString() || "N/A"}
+          </p>
           <p style={{ fontSize: "16px", lineHeight: "1.5" }}>
             <strong>📌 Description:</strong> {car.description || "No description available."}
           </p>
@@ -136,7 +184,9 @@ function CarDetails() {
       </div>
 
       <div style={{ marginTop: "20px", textAlign: "center" }}>
-        <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>← Back to Cars</Link>
+        <Link to="/" style={{ color: "#0d47a1", textDecoration: "none" }}>
+          ← Back to Cars
+        </Link>
       </div>
 
       {/* Fullscreen image view */}
@@ -201,7 +251,7 @@ function CarDetails() {
         </div>
       )}
 
-      {/* Responsive styles */}
+      {/* Responsive adjustments */}
       <style>
         {`
           @media (max-width: 768px) {
