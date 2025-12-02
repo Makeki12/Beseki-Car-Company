@@ -66,8 +66,8 @@ function FeaturedCars() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "30px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "25px",
             maxWidth: "1200px",
             margin: "0 auto",
           }}
@@ -91,6 +91,7 @@ function FeaturedCars() {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
+                  minHeight: "400px",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-5px)";
@@ -137,8 +138,7 @@ function FeaturedCars() {
                   </div>
                 )}
 
-                {/* Card content below image */}
-                <div style={{ padding: "20px", textAlign: "left" }}>
+                <div style={{ padding: "20px", textAlign: "left", flexGrow: 1 }}>
                   <h3
                     style={{
                       fontSize: "1.4rem",
@@ -172,13 +172,22 @@ function FeaturedCars() {
                       : car.description}
                   </p>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     {/* Star rating */}
-                    <div style={{ color: "#ffb400" }}>⭐⭐⭐⭐☆</div>
+                    <div style={{ color: "#ffb400", marginBottom: "5px" }}>
+                      ⭐⭐⭐⭐☆
+                    </div>
 
                     {/* View Details button */}
                     <Link
-                      to={`/car/${car._id|| car.id}`}
+                      to={`/car/${car._id || car.id}`}
                       style={{
                         display: "inline-block",
                         padding: "10px 18px",
@@ -188,9 +197,14 @@ function FeaturedCars() {
                         textDecoration: "none",
                         fontWeight: "bold",
                         transition: "0.3s",
+                        marginBottom: "5px",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#0941a3")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "#0d47a1")}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#0941a3")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "#0d47a1")
+                      }
                     >
                       View Details →
                     </Link>
@@ -221,6 +235,28 @@ function FeaturedCars() {
           })}
         </div>
       )}
+
+      {/* Responsive adjustments */}
+      <style>
+        {`
+          @media (max-width: 768px) {
+            #cars div[style*='grid-template-columns'] {
+              grid-template-columns: 1fr !important;
+            }
+            #cars img {
+              height: 180px !important;
+            }
+          }
+          @media (max-width: 480px) {
+            #cars h3 {
+              font-size: 1.2rem !important;
+            }
+            #cars p {
+              font-size: 0.9rem !important;
+            }
+          }
+        `}
+      </style>
     </section>
   );
 }
