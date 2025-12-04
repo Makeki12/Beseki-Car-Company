@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Confetti from "react-confetti";
 
 const ContactForm = () => {
   const [cars, setCars] = useState([]);
-  const [selectedCarId, setSelectedCarId] = useState(""); // selected car
-  const [selectedCarImage, setSelectedCarImage] = useState(""); // preview image
+  const [selectedCarId, setSelectedCarId] = useState("");
+  const [selectedCarImage, setSelectedCarImage] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -14,9 +15,11 @@ const ContactForm = () => {
     message: "",
   });
 
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState({ message: "", type: "" });
+  const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Fetch cars from backend
+  // Fetch cars
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -28,16 +31,13 @@ const ContactForm = () => {
         console.error("Error fetching cars:", err);
       }
     };
-
     fetchCars();
   }, []);
 
-  // Handle text input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle car selection
   const handleCarSelect = (e) => {
     const carId = e.target.value;
     setSelectedCarId(carId);
@@ -50,26 +50,46 @@ const ContactForm = () => {
     }
   };
 
-  // Submit booking
+  const validateForm = () => {
+    const { name, email, phone, preferredDate } = formData;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+    const today = new Date().toISOString().split("T")[0];
+
+    if (!name || !email || !phone || !preferredDate || !selectedCarId) {
+      setStatus({ message: "❌ Please fill in all required fields.", type: "error" });
+      return false;
+    }
+    if (!emailRegex.test(email)) {
+      setStatus({ message: "❌ Invalid email address.", type: "error" });
+      return false;
+    }
+    if (!phoneRegex.test(phone)) {
+      setStatus({ message: "❌ Phone must be 10 digits.", type: "error" });
+      return false;
+    }
+    if (preferredDate < today) {
+      setStatus({ message: "❌ Date cannot be in the past.", type: "error" });
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus("");
+    setStatus({ message: "", type: "" });
 
-    if (!selectedCarId) {
-      setStatus("❌ Please select a car for your test drive.");
-      return;
-    }
+    if (!validateForm()) return;
 
+    setLoading(true);
     try {
-      const res = await axios.post(
+      await axios.post(
         "https://beseki-car-company.onrender.com/api/bookings",
-        {
-          ...formData,
-          carId: selectedCarId, // VERY IMPORTANT
-        }
+        { ...formData, carId: selectedCarId }
       );
 
-      setStatus("✅ Booking submitted successfully!");
+      // Show success modal
+      setShowSuccessModal(true);
 
       // Reset form
       setFormData({
@@ -83,65 +103,64 @@ const ContactForm = () => {
       setSelectedCarImage("");
     } catch (err) {
       console.error("Booking error:", err.response?.data || err);
-      setStatus("❌ Failed to save booking. Try again.");
+      setStatus({ message: "❌ Failed to save booking. Try again.", type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const closeModal = () => setShowSuccessModal(false);
+
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-lg p-6 rounded-xl border border-gray-200 mt-6 mb-10">
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-700">
+    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12 transition-transform transform hover:scale-[1.02] duration-300 relative">
+      {/* Confetti */}
+      {showSuccessModal && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+
+      <h2 className="text-3xl font-bold mb-6 text-center text-blue-700 drop-shadow-sm">
         Book a Test Drive
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* FULL NAME */}
+      <form onSubmit={handleSubmit} className="space-y-5">
         <input
           type="text"
           name="name"
           placeholder="Full Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-3 border rounded-md"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
           required
         />
-
-        {/* EMAIL */}
         <input
           type="email"
           name="email"
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-3 border rounded-md"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
           required
         />
-
-        {/* PHONE */}
         <input
           type="text"
           name="phone"
-          placeholder="Phone Number"
+          placeholder="Phone Number (10 digits)"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-3 border rounded-md"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
           required
         />
-
-        {/* PREFERRED DATE */}
         <input
           type="date"
           name="preferredDate"
           value={formData.preferredDate}
           onChange={handleChange}
-          className="w-full p-3 border rounded-md"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
           required
         />
 
-        {/* CAR SELECTION */}
         <select
           value={selectedCarId}
           onChange={handleCarSelect}
-          className="w-full p-3 border rounded-md bg-gray-50"
+          className="w-full p-4 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none transition"
           required
         >
           <option value="">Select a Car</option>
@@ -152,39 +171,62 @@ const ContactForm = () => {
           ))}
         </select>
 
-        {/* CAR IMAGE PREVIEW */}
         {selectedCarImage && (
-          <div className="mt-3">
+          <div className="mt-3 overflow-hidden rounded-xl shadow-lg transition-transform transform hover:scale-105">
             <img
               src={selectedCarImage}
               alt="Car Preview"
-              className="w-full h-48 object-cover rounded-md border shadow"
+              className="w-full h-52 object-cover"
             />
           </div>
         )}
 
-        {/* MESSAGE */}
         <textarea
           name="message"
           placeholder="Message (optional)"
           value={formData.message}
           onChange={handleChange}
-          rows="3"
-          className="w-full p-3 border rounded-md"
+          rows="4"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
         />
 
-        {/* SUBMIT BUTTON */}
         <button
           type="submit"
-          className="w-full bg-blue-700 text-white py-3 rounded-md font-semibold hover:bg-blue-800 transition"
+          disabled={loading}
+          className={`w-full bg-blue-700 text-white py-4 rounded-lg font-semibold hover:bg-blue-800 transition-all duration-300 shadow-md hover:shadow-lg ${
+            loading ? "opacity-60 cursor-not-allowed" : ""
+          }`}
         >
-          Submit Booking
+          {loading ? "Submitting..." : "Submit Booking"}
         </button>
       </form>
 
-      {/* Status Message */}
-      {status && (
-        <p className="mt-4 text-center font-semibold text-red-600">{status}</p>
+      {status.message && (
+        <p
+          className={`mt-5 text-center font-semibold ${
+            status.type === "success" ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {status.message}
+        </p>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-sm text-center relative shadow-lg">
+            <h3 className="text-2xl font-bold text-green-600 mb-4">
+              Booking Confirmed!
+            </h3>
+            <p className="mb-6">Thank you for booking a test drive. We will contact you soon!</p>
+            <button
+              onClick={closeModal}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
