@@ -1,240 +1,193 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function ContactForm() {
-  const API = "https://beseki-car-company.onrender.com";
-
+const ContactForm = () => {
   const [cars, setCars] = useState([]);
-  const [selectedCar, setSelectedCar] = useState(null);
-  const [status, setStatus] = useState("");
+  const [selectedCarId, setSelectedCarId] = useState(""); // selected car
+  const [selectedCarImage, setSelectedCarImage] = useState(""); // preview image
 
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     preferredDate: "",
     message: "",
-    carId: "",
   });
 
-  // Load cars
+  const [status, setStatus] = useState("");
+
+  // Fetch cars from backend
   useEffect(() => {
-    axios
-      .get(`${API}/api/cars`)
-      .then((res) => {
+    const fetchCars = async () => {
+      try {
+        const res = await axios.get(
+          "https://beseki-car-company.onrender.com/api/cars"
+        );
         setCars(res.data);
-      })
-      .catch((err) => {
-        console.error("Error loading cars:", err);
-      });
+      } catch (err) {
+        console.error("Error fetching cars:", err);
+      }
+    };
+
+    fetchCars();
   }, []);
 
-  // Update Form Values
-  function handleChange(e) {
-    const { name, value } = e.target;
+  // Handle text input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    setForm((prev) => ({ ...prev, [name]: value }));
+  // Handle car selection
+  const handleCarSelect = (e) => {
+    const carId = e.target.value;
+    setSelectedCarId(carId);
 
-    // Update car preview
-    if (name === "carId") {
-      const car = cars.find((c) => c._id === value);
-      setSelectedCar(car || null);
+    const selectedCar = cars.find((car) => car.id === carId);
+    if (selectedCar && selectedCar.images.length > 0) {
+      setSelectedCarImage(selectedCar.images[0].url);
+    } else {
+      setSelectedCarImage("");
     }
-  }
+  };
 
-  // Submit Booking
-  async function handleSubmit(e) {
+  // Submit booking
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus("");
 
-    if (!form.carId) {
-      setStatus("❌ Please select a car.");
+    if (!selectedCarId) {
+      setStatus("❌ Please select a car for your test drive.");
       return;
     }
 
     try {
-      const res = await axios.post(`${API}/api/bookings`, form);
+      const res = await axios.post(
+        "https://beseki-car-company.onrender.com/api/bookings",
+        {
+          ...formData,
+          carId: selectedCarId, // VERY IMPORTANT
+        }
+      );
 
-      if (res.status === 201) {
-        setStatus("✅ Booking saved successfully!");
+      setStatus("✅ Booking submitted successfully!");
 
-        setForm({
-          name: "",
-          email: "",
-          phone: "",
-          preferredDate: "",
-          message: "",
-          carId: "",
-        });
-
-        setSelectedCar(null);
-      }
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        preferredDate: "",
+        message: "",
+      });
+      setSelectedCarId("");
+      setSelectedCarImage("");
     } catch (err) {
-      console.error("Booking error:", err.response?.data);
-      setStatus("❌ " + (err.response?.data?.error || "Failed to save booking"));
+      console.error("Booking error:", err.response?.data || err);
+      setStatus("❌ Failed to save booking. Try again.");
     }
-  }
+  };
 
   return (
-    <div
-      style={{
-        maxWidth: "650px",
-        margin: "40px auto",
-        padding: "30px",
-        background: "#fff",
-        borderRadius: "15px",
-        boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "#0d47a1",
-          fontSize: "28px",
-          marginBottom: "20px",
-          fontWeight: "bold",
-        }}
-      >
-        🚗 Book a Test Drive
+    <div className="max-w-lg mx-auto bg-white shadow-lg p-6 rounded-xl border border-gray-200 mt-6 mb-10">
+      <h2 className="text-2xl font-bold mb-4 text-center text-blue-700">
+        Book a Test Drive
       </h2>
 
-      <form onSubmit={handleSubmit}>
-        {/* NAME */}
-        <label style={labelStyle}>Full Name</label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* FULL NAME */}
         <input
+          type="text"
           name="name"
-          value={form.name}
+          placeholder="Full Name"
+          value={formData.name}
           onChange={handleChange}
+          className="w-full p-3 border rounded-md"
           required
-          style={inputStyle}
         />
 
         {/* EMAIL */}
-        <label style={labelStyle}>Email</label>
         <input
           type="email"
           name="email"
-          value={form.email}
+          placeholder="Email Address"
+          value={formData.email}
           onChange={handleChange}
+          className="w-full p-3 border rounded-md"
           required
-          style={inputStyle}
         />
 
         {/* PHONE */}
-        <label style={labelStyle}>Phone Number</label>
         <input
+          type="text"
           name="phone"
-          value={form.phone}
+          placeholder="Phone Number"
+          value={formData.phone}
           onChange={handleChange}
+          className="w-full p-3 border rounded-md"
           required
-          style={inputStyle}
         />
 
-        {/* DATE */}
-        <label style={labelStyle}>Preferred Date</label>
+        {/* PREFERRED DATE */}
         <input
           type="date"
           name="preferredDate"
-          value={form.preferredDate}
+          value={formData.preferredDate}
           onChange={handleChange}
+          className="w-full p-3 border rounded-md"
           required
-          style={inputStyle}
         />
 
-        {/* CAR SELECT */}
-        <label style={labelStyle}>Select a Car</label>
+        {/* CAR SELECTION */}
         <select
-          name="carId"
-          value={form.carId}
-          onChange={handleChange}
+          value={selectedCarId}
+          onChange={handleCarSelect}
+          className="w-full p-3 border rounded-md bg-gray-50"
           required
-          style={inputStyle}
         >
-          <option value="">-- Choose a car model --</option>
+          <option value="">Select a Car</option>
           {cars.map((car) => (
-            <option key={car._id} value={car._id}>
-              {car.name} — Ksh {Number(car.price).toLocaleString()}
+            <option key={car.id} value={car.id}>
+              {car.name} — Ksh {car.price.toLocaleString()}
             </option>
           ))}
         </select>
 
-        {/* IMAGE PREVIEW */}
-        {selectedCar && (
-          <div style={{ marginTop: "15px", textAlign: "center" }}>
-            <p style={{ fontWeight: "bold", color: "#0d47a1" }}>
-              Selected Car Preview:
-            </p>
+        {/* CAR IMAGE PREVIEW */}
+        {selectedCarImage && (
+          <div className="mt-3">
             <img
-              src={selectedCar.images?.[0]?.url}
-              alt="Car"
-              style={{
-                width: "100%",
-                maxHeight: "260px",
-                objectFit: "cover",
-                borderRadius: "10px",
-                border: "1px solid #ccc",
-              }}
+              src={selectedCarImage}
+              alt="Car Preview"
+              className="w-full h-48 object-cover rounded-md border shadow"
             />
           </div>
         )}
 
         {/* MESSAGE */}
-        <label style={labelStyle}>Message (optional)</label>
         <textarea
           name="message"
-          value={form.message}
+          placeholder="Message (optional)"
+          value={formData.message}
           onChange={handleChange}
-          style={{ ...inputStyle, minHeight: "100px" }}
-        ></textarea>
+          rows="3"
+          className="w-full p-3 border rounded-md"
+        />
 
-        {/* SUBMIT */}
-        <button type="submit" style={buttonStyle}>
+        {/* SUBMIT BUTTON */}
+        <button
+          type="submit"
+          className="w-full bg-blue-700 text-white py-3 rounded-md font-semibold hover:bg-blue-800 transition"
+        >
           Submit Booking
         </button>
       </form>
 
+      {/* Status Message */}
       {status && (
-        <p
-          style={{
-            marginTop: "20px",
-            textAlign: "center",
-            fontWeight: "bold",
-            color: status.startsWith("❌") ? "red" : "green",
-          }}
-        >
-          {status}
-        </p>
+        <p className="mt-4 text-center font-semibold text-red-600">{status}</p>
       )}
     </div>
   );
-}
-
-// Styles
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  border: "1px solid #ccc",
-  borderRadius: "10px",
-  fontSize: "16px",
-  marginBottom: "10px",
 };
 
-const labelStyle = {
-  fontWeight: "bold",
-  marginBottom: "5px",
-  display: "block",
-  color: "#0d47a1",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "14px",
-  marginTop: "15px",
-  background: "#0d47a1",
-  color: "white",
-  border: "none",
-  borderRadius: "10px",
-  fontSize: "17px",
-  cursor: "pointer",
-  fontWeight: "bold",
-};
+export default ContactForm;
