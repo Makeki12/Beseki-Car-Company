@@ -5,13 +5,13 @@ export default function BookTestDrive() {
   const location = useLocation();
   const preselectedCarId = location.state?.carId || "";
 
-  // FORM STATE (fixed names to match backend)
+  // CORRECT FIELD NAMES TO MATCH BACKEND
   const [form, setForm] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
-    car: preselectedCarId,
-    date: "",
+    carId: preselectedCarId,
+    preferredDate: "",
     message: "",
   });
 
@@ -27,18 +27,15 @@ export default function BookTestDrive() {
     process.env.REACT_APP_API_URL ||
     "https://beseki-backend.onrender.com";
 
-  // Load cars
+  // Load car list
   useEffect(() => {
     fetch(`${API_BASE}/api/cars`)
       .then((res) => res.json())
       .then((data) => setCars(data))
-      .catch((err) => {
-        console.error("Error loading cars:", err);
-        setStatus("⚠️ Unable to load cars.");
-      });
+      .catch(() => setStatus("⚠️ Unable to load cars"));
   }, [API_BASE]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -49,17 +46,18 @@ export default function BookTestDrive() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Update form values
+  // Handle input change
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
+  // Select car from dropdown
   function selectCar(carId) {
-    setForm({ ...form, car: carId });
+    setForm({ ...form, carId });
     setDropdownOpen(false);
   }
 
-  // SUBMIT FORM FIXED
+  // Submit form to backend
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus(null);
@@ -73,25 +71,26 @@ export default function BookTestDrive() {
 
       if (res.ok) {
         setStatus("✅ Test Drive Booking Submitted!");
+
         setForm({
-          fullName: "",
+          name: "",
           email: "",
           phone: "",
-          car: "",
-          date: "",
+          carId: "",
+          preferredDate: "",
           message: "",
         });
       } else {
         const err = await res.json();
-        setStatus("❌ " + (err.error || "Booking failed."));
+        setStatus("❌ " + (err.error || "Invalid form data"));
       }
     } catch (err) {
-      setStatus("⚠️ Server Error. Try again later.");
       console.error("Booking error:", err);
+      setStatus("⚠️ Server error. Try again later.");
     }
   }
 
-  const selectedCar = cars.find((c) => c._id === form.car);
+  const selectedCar = cars.find((c) => c._id === form.carId);
 
   return (
     <div
@@ -116,11 +115,11 @@ export default function BookTestDrive() {
       </h2>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-
+        
         <input
-          name="fullName"
+          name="name"
           placeholder="Full Name"
-          value={form.fullName}
+          value={form.name}
           onChange={handleChange}
           required
           style={inputStyle}
@@ -145,23 +144,15 @@ export default function BookTestDrive() {
           style={inputStyle}
         />
 
-        {/* CAR DROPDOWN FIXED */}
+        {/* CAR DROPDOWN (FIXED) */}
         <div ref={dropdownRef} style={{ position: "relative" }}>
-          <div
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={dropdownButton}
-          >
+          <div onClick={() => setDropdownOpen(!dropdownOpen)} style={dropdownButton}>
             {selectedCar ? (
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <img
                   src={selectedCar.images?.[0]?.url}
                   alt={selectedCar.name}
-                  style={{
-                    width: "45px",
-                    height: "35px",
-                    objectFit: "cover",
-                    borderRadius: "6px",
-                  }}
+                  style={carThumb}
                 />
                 <span>
                   {selectedCar.name} — Ksh {Number(selectedCar.price).toLocaleString()}
@@ -184,19 +175,10 @@ export default function BookTestDrive() {
                   onClick={() => selectCar(car._id)}
                   style={{
                     ...dropdownItem,
-                    background: car._id === form.car ? "#e3f2fd" : "#fff",
+                    background: car._id === form.carId ? "#e3f2fd" : "#fff",
                   }}
                 >
-                  <img
-                    src={car.images?.[0]?.url}
-                    alt={car.name}
-                    style={{
-                      width: "55px",
-                      height: "35px",
-                      objectFit: "cover",
-                      borderRadius: "6px",
-                    }}
-                  />
+                  <img src={car.images?.[0]?.url} alt={car.name} style={carThumb} />
                   <span>{car.name} — Ksh {Number(car.price).toLocaleString()}</span>
                 </div>
               ))}
@@ -205,9 +187,9 @@ export default function BookTestDrive() {
         </div>
 
         <input
-          name="date"
+          name="preferredDate"
           type="date"
-          value={form.date}
+          value={form.preferredDate}
           onChange={handleChange}
           required
           style={inputStyle}
@@ -215,7 +197,7 @@ export default function BookTestDrive() {
 
         <textarea
           name="message"
-          placeholder="Additional Message (optional)"
+          placeholder="Message (optional)"
           value={form.message}
           onChange={handleChange}
           style={{ ...inputStyle, minHeight: "100px" }}
@@ -241,7 +223,6 @@ const inputStyle = {
   borderRadius: "10px",
   border: "1px solid #ccc",
   fontSize: "15px",
-  outline: "none",
 };
 
 const dropdownButton = {
@@ -274,7 +255,13 @@ const dropdownItem = {
   gap: "10px",
   padding: "12px",
   cursor: "pointer",
-  transition: "0.2s",
+};
+
+const carThumb = {
+  width: "55px",
+  height: "35px",
+  objectFit: "cover",
+  borderRadius: "6px",
 };
 
 const submitButton = {
@@ -286,4 +273,3 @@ const submitButton = {
   cursor: "pointer",
   fontSize: "16px",
 };
-
