@@ -3,6 +3,8 @@ import axios from "axios";
 
 const ContactForm = () => {
   const [cars, setCars] = useState([]);
+  const [selectedCar, setSelectedCar] = useState(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -14,30 +16,33 @@ const ContactForm = () => {
 
   const [status, setStatus] = useState("");
 
-  // Fetch cars from backend
+  // Load cars
   useEffect(() => {
     axios
       .get("https://beseki-car-company.onrender.com/api/cars")
       .then((res) => {
         setCars(res.data);
-
-        // ❗ Ensure carId is EMPTY so user MUST select
-        setFormData((prev) => ({ ...prev, carId: "" }));
       })
-      .catch((err) => console.error("Failed to load cars", err));
+      .catch((err) => console.error(err));
   }, []);
 
-  // Handle input change
+  // Handle form input
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // If user selects a car, update preview
+    if (name === "carId") {
+      const car = cars.find((c) => c._id === value);
+      setSelectedCar(car || null);
+    }
   };
 
-  // Submit booking
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setStatus("");
 
     if (!formData.carId) {
       setStatus("❌ Please select a car");
@@ -60,9 +65,11 @@ const ContactForm = () => {
         message: "",
         carId: "",
       });
+
+      setSelectedCar(null);
     } catch (error) {
-      console.log("Booking error:", error.response?.data);
-      setStatus("❌ Failed to submit booking");
+      console.error("Booking error:", error.response?.data);
+      setStatus("❌ Failed to save booking – backend error");
     }
   };
 
@@ -72,22 +79,12 @@ const ContactForm = () => {
         maxWidth: "600px",
         margin: "40px auto",
         padding: "25px",
-        background: "#ffffff",
+        background: "#fff",
         borderRadius: "12px",
-        boxShadow: "0px 4px 14px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
       }}
     >
-      <h2
-        style={{
-          textAlign: "center",
-          marginBottom: "20px",
-          color: "#0d47a1",
-          fontSize: "28px",
-          fontWeight: "bold",
-        }}
-      >
-        Book a Test Drive
-      </h2>
+      <h2 style={headerStyle}>Book a Test Drive</h2>
 
       <form onSubmit={handleSubmit}>
         {/* NAME */}
@@ -134,7 +131,7 @@ const ContactForm = () => {
           required
         />
 
-        {/* CAR SELECTION */}
+        {/* CAR DROPDOWN */}
         <label style={labelStyle}>Select a Car</label>
         <select
           name="carId"
@@ -143,7 +140,7 @@ const ContactForm = () => {
           onChange={handleChange}
           required
         >
-          <option value="">-- Select a car --</option>
+          <option value="">-- Choose a car --</option>
 
           {cars.map((car) => (
             <option key={car._id} value={car._id}>
@@ -152,8 +149,33 @@ const ContactForm = () => {
           ))}
         </select>
 
+        {/* CAR IMAGE PREVIEW */}
+        {selectedCar && selectedCar.images && selectedCar.images.length > 0 && (
+          <div
+            style={{
+              marginTop: "15px",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ fontWeight: "600", color: "#0d47a1" }}>
+              Selected Car Preview:
+            </p>
+            <img
+              src={selectedCar.images[0]}
+              alt="Car Preview"
+              style={{
+                width: "100%",
+                maxHeight: "230px",
+                objectFit: "cover",
+                borderRadius: "10px",
+                border: "1px solid #ccc",
+              }}
+            />
+          </div>
+        )}
+
         {/* MESSAGE */}
-        <label style={labelStyle}>Additional Message (Optional)</label>
+        <label style={labelStyle}>Message (optional)</label>
         <textarea
           name="message"
           style={{ ...inputStyle, height: "100px" }}
@@ -161,23 +183,8 @@ const ContactForm = () => {
           onChange={handleChange}
         ></textarea>
 
-        {/* BUTTON */}
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            marginTop: "15px",
-            padding: "12px",
-            background: "#0d47a1",
-            color: "white",
-            fontSize: "16px",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "bold",
-            transition: "0.3s",
-          }}
-        >
+        {/* SUBMIT */}
+        <button type="submit" style={buttonStyle}>
           Submit Booking
         </button>
       </form>
@@ -198,6 +205,14 @@ const ContactForm = () => {
   );
 };
 
+const headerStyle = {
+  textAlign: "center",
+  marginBottom: "20px",
+  color: "#0d47a1",
+  fontSize: "28px",
+  fontWeight: "bold",
+};
+
 const labelStyle = {
   display: "block",
   marginTop: "12px",
@@ -213,6 +228,20 @@ const inputStyle = {
   border: "1px solid #ccc",
   marginBottom: "10px",
   fontSize: "15px",
+};
+
+const buttonStyle = {
+  width: "100%",
+  marginTop: "15px",
+  padding: "12px",
+  background: "#0d47a1",
+  color: "white",
+  fontSize: "16px",
+  borderRadius: "8px",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "bold",
+  transition: "0.3s",
 };
 
 
