@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const ContactForm = () => {
+export default function ContactForm() {
+  const API = "https://beseki-car-company.onrender.com";
+
   const [cars, setCars] = useState([]);
   const [selectedCar, setSelectedCar] = useState(null);
+  const [status, setStatus] = useState("");
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
@@ -14,88 +17,96 @@ const ContactForm = () => {
     carId: "",
   });
 
-  const [status, setStatus] = useState("");
-
   // Load cars
   useEffect(() => {
     axios
-      .get("https://beseki-car-company.onrender.com/api/cars")
+      .get(`${API}/api/cars`)
       .then((res) => {
         setCars(res.data);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error("Error loading cars:", err);
+      });
   }, []);
 
-  // Handle form input
-  const handleChange = (e) => {
+  // Update Form Values
+  function handleChange(e) {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
 
-    // If user selects a car, update preview
+    // Update car preview
     if (name === "carId") {
       const car = cars.find((c) => c._id === value);
       setSelectedCar(car || null);
     }
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  // Submit Booking
+  async function handleSubmit(e) {
     e.preventDefault();
-
     setStatus("");
 
-    if (!formData.carId) {
-      setStatus("❌ Please select a car");
+    if (!form.carId) {
+      setStatus("❌ Please select a car.");
       return;
     }
 
     try {
-      const response = await axios.post(
-        "https://beseki-car-company.onrender.com/api/bookings",
-        formData
-      );
+      const res = await axios.post(`${API}/api/bookings`, form);
 
-      setStatus("✅ Booking submitted successfully!");
+      if (res.status === 201) {
+        setStatus("✅ Booking saved successfully!");
 
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        preferredDate: "",
-        message: "",
-        carId: "",
-      });
+        setForm({
+          name: "",
+          email: "",
+          phone: "",
+          preferredDate: "",
+          message: "",
+          carId: "",
+        });
 
-      setSelectedCar(null);
-    } catch (error) {
-      console.error("Booking error:", error.response?.data);
-      setStatus("❌ Failed to save booking – backend error");
+        setSelectedCar(null);
+      }
+    } catch (err) {
+      console.error("Booking error:", err.response?.data);
+      setStatus("❌ " + (err.response?.data?.error || "Failed to save booking"));
     }
-  };
+  }
 
   return (
     <div
       style={{
-        maxWidth: "600px",
+        maxWidth: "650px",
         margin: "40px auto",
-        padding: "25px",
+        padding: "30px",
         background: "#fff",
-        borderRadius: "12px",
-        boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+        borderRadius: "15px",
+        boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
       }}
     >
-      <h2 style={headerStyle}>Book a Test Drive</h2>
+      <h2
+        style={{
+          textAlign: "center",
+          color: "#0d47a1",
+          fontSize: "28px",
+          marginBottom: "20px",
+          fontWeight: "bold",
+        }}
+      >
+        🚗 Book a Test Drive
+      </h2>
 
       <form onSubmit={handleSubmit}>
         {/* NAME */}
         <label style={labelStyle}>Full Name</label>
         <input
-          type="text"
           name="name"
-          style={inputStyle}
-          value={formData.name}
+          value={form.name}
           onChange={handleChange}
           required
+          style={inputStyle}
         />
 
         {/* EMAIL */}
@@ -103,21 +114,20 @@ const ContactForm = () => {
         <input
           type="email"
           name="email"
-          style={inputStyle}
-          value={formData.email}
+          value={form.email}
           onChange={handleChange}
           required
+          style={inputStyle}
         />
 
         {/* PHONE */}
         <label style={labelStyle}>Phone Number</label>
         <input
-          type="text"
           name="phone"
-          style={inputStyle}
-          value={formData.phone}
+          value={form.phone}
           onChange={handleChange}
           required
+          style={inputStyle}
         />
 
         {/* DATE */}
@@ -125,47 +135,41 @@ const ContactForm = () => {
         <input
           type="date"
           name="preferredDate"
-          style={inputStyle}
-          value={formData.preferredDate}
+          value={form.preferredDate}
           onChange={handleChange}
           required
+          style={inputStyle}
         />
 
-        {/* CAR DROPDOWN */}
+        {/* CAR SELECT */}
         <label style={labelStyle}>Select a Car</label>
         <select
           name="carId"
-          style={inputStyle}
-          value={formData.carId}
+          value={form.carId}
           onChange={handleChange}
           required
+          style={inputStyle}
         >
-          <option value="">-- Choose a car --</option>
-
+          <option value="">-- Choose a car model --</option>
           {cars.map((car) => (
             <option key={car._id} value={car._id}>
-              {car.name} — KES {car.price.toLocaleString()}
+              {car.name} — Ksh {Number(car.price).toLocaleString()}
             </option>
           ))}
         </select>
 
-        {/* CAR IMAGE PREVIEW */}
-        {selectedCar && selectedCar.images && selectedCar.images.length > 0 && (
-          <div
-            style={{
-              marginTop: "15px",
-              textAlign: "center",
-            }}
-          >
-            <p style={{ fontWeight: "600", color: "#0d47a1" }}>
+        {/* IMAGE PREVIEW */}
+        {selectedCar && (
+          <div style={{ marginTop: "15px", textAlign: "center" }}>
+            <p style={{ fontWeight: "bold", color: "#0d47a1" }}>
               Selected Car Preview:
             </p>
             <img
-              src={selectedCar.images[0]}
-              alt="Car Preview"
+              src={selectedCar.images?.[0]?.url}
+              alt="Car"
               style={{
                 width: "100%",
-                maxHeight: "230px",
+                maxHeight: "260px",
                 objectFit: "cover",
                 borderRadius: "10px",
                 border: "1px solid #ccc",
@@ -178,9 +182,9 @@ const ContactForm = () => {
         <label style={labelStyle}>Message (optional)</label>
         <textarea
           name="message"
-          style={{ ...inputStyle, height: "100px" }}
-          value={formData.message}
+          value={form.message}
           onChange={handleChange}
+          style={{ ...inputStyle, minHeight: "100px" }}
         ></textarea>
 
         {/* SUBMIT */}
@@ -192,10 +196,10 @@ const ContactForm = () => {
       {status && (
         <p
           style={{
-            marginTop: "15px",
+            marginTop: "20px",
             textAlign: "center",
             fontWeight: "bold",
-            color: status.includes("❌") ? "red" : "green",
+            color: status.startsWith("❌") ? "red" : "green",
           }}
         >
           {status}
@@ -203,46 +207,34 @@ const ContactForm = () => {
       )}
     </div>
   );
-};
+}
 
-const headerStyle = {
-  textAlign: "center",
-  marginBottom: "20px",
-  color: "#0d47a1",
-  fontSize: "28px",
-  fontWeight: "bold",
+// Styles
+const inputStyle = {
+  width: "100%",
+  padding: "12px",
+  border: "1px solid #ccc",
+  borderRadius: "10px",
+  fontSize: "16px",
+  marginBottom: "10px",
 };
 
 const labelStyle = {
-  display: "block",
-  marginTop: "12px",
+  fontWeight: "bold",
   marginBottom: "5px",
-  fontWeight: "600",
+  display: "block",
   color: "#0d47a1",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px",
-  borderRadius: "6px",
-  border: "1px solid #ccc",
-  marginBottom: "10px",
-  fontSize: "15px",
 };
 
 const buttonStyle = {
   width: "100%",
+  padding: "14px",
   marginTop: "15px",
-  padding: "12px",
   background: "#0d47a1",
   color: "white",
-  fontSize: "16px",
-  borderRadius: "8px",
   border: "none",
+  borderRadius: "10px",
+  fontSize: "17px",
   cursor: "pointer",
   fontWeight: "bold",
-  transition: "0.3s",
 };
-
-
-export default ContactForm;
