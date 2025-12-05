@@ -34,7 +34,7 @@ const ContactForm = () => {
     fetchCars();
   }, []);
 
-  // Click outside to close dropdown
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -56,6 +56,7 @@ const ContactForm = () => {
 
   const validateForm = () => {
     const { name, email, phone, preferredDate } = formData;
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
 
@@ -83,6 +84,7 @@ const ContactForm = () => {
       });
       return false;
     }
+
     return true;
   };
 
@@ -93,13 +95,13 @@ const ContactForm = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+
     try {
       await axios.post(
         "https://beseki-car-company.onrender.com/api/bookings",
         {
           ...formData,
           carId: selectedCar.id,
-          preferredDate: formData.preferredDate,
         }
       );
 
@@ -128,19 +130,19 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12">
-      <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">
+    <div className="max-w-xl mx-auto mt-10 mb-16 p-8 bg-white rounded-2xl shadow-xl border border-gray-200">
+      <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
         Book a Test Drive
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <input
           type="text"
           name="name"
           placeholder="Full Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg"
+          className="w-full p-4 border rounded-xl shadow-sm"
         />
 
         <input
@@ -149,7 +151,7 @@ const ContactForm = () => {
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg"
+          className="w-full p-4 border rounded-xl shadow-sm"
         />
 
         <input
@@ -158,7 +160,7 @@ const ContactForm = () => {
           placeholder="Phone Number (10 digits)"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg"
+          className="w-full p-4 border rounded-xl shadow-sm"
         />
 
         <input
@@ -166,21 +168,21 @@ const ContactForm = () => {
           name="preferredDate"
           value={formData.preferredDate}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg"
+          className="w-full p-4 border rounded-xl shadow-sm"
         />
 
-        {/* ---------------- CUSTOM DROPDOWN ---------------- */}
+        {/* ------- CAR DROPDOWN -------- */}
         <div ref={dropdownRef} className="relative">
           <div
             onClick={() => setShowDropdown(!showDropdown)}
-            className="p-4 border w-full rounded-lg bg-gray-100 cursor-pointer flex items-center gap-3"
+            className="p-4 border rounded-xl bg-gray-100 cursor-pointer flex items-center gap-3 shadow-sm"
           >
             {selectedCar ? (
               <>
                 <img
                   src={selectedCar.images[0]?.url}
+                  className="w-14 h-14 object-cover rounded-lg"
                   alt="thumb"
-                  className="w-12 h-12 object-cover rounded-md"
                 />
                 <span className="font-semibold">
                   {selectedCar.name} — Ksh {selectedCar.price.toLocaleString()}
@@ -192,17 +194,19 @@ const ContactForm = () => {
           </div>
 
           {showDropdown && (
-            <div className="absolute z-20 bg-white w-full shadow-lg border rounded-lg max-h-64 overflow-y-auto">
+            <div
+              className="absolute left-0 right-0 mt-2 bg-white border rounded-xl shadow-lg max-h-72 overflow-y-auto z-20"
+            >
               {cars.map((car) => (
                 <div
                   key={car.id}
                   onClick={() => selectCar(car)}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer"
+                  className="flex items-center gap-4 p-3 hover:bg-blue-50 cursor-pointer transition"
                 >
                   <img
                     src={car.images[0]?.url}
-                    alt={car.name}
-                    className="w-12 h-12 object-cover rounded-md"
+                    alt="car"
+                    className="w-14 h-14 object-cover rounded-lg"
                   />
                   <div>
                     <p className="font-semibold">{car.name}</p>
@@ -216,30 +220,21 @@ const ContactForm = () => {
           )}
         </div>
 
-        {/* --------- MAIN PREVIEW --------- */}
-        {selectedCar && (
-          <div className="mt-3">
-            <img
-              src={selectedCar.images[0].url}
-              className="w-full h-52 object-cover rounded-xl shadow-md"
-              alt="preview"
-            />
-          </div>
-        )}
+        {/* ---- REMOVED BIG PREVIEW HERE ---- */}
 
         <textarea
           name="message"
           placeholder="Message (optional)"
           value={formData.message}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg"
+          className="w-full p-4 border rounded-xl shadow-sm"
           rows="4"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full bg-blue-700 text-white py-4 rounded-lg font-semibold hover:bg-blue-800 transition ${
+          className={`w-full bg-blue-700 text-white py-4 rounded-xl font-semibold hover:bg-blue-800 transition ${
             loading ? "opacity-60 cursor-not-allowed" : ""
           }`}
         >
