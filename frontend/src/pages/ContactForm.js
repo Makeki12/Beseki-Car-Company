@@ -57,7 +57,10 @@ const ContactForm = () => {
     const today = new Date().toISOString().split("T")[0];
 
     if (!name || !email || !phone || !preferredDate || !selectedCarId) {
-      setStatus({ message: "❌ Please fill in all required fields.", type: "error" });
+      setStatus({
+        message: "❌ Please fill in all required fields.",
+        type: "error",
+      });
       return false;
     }
     if (!emailRegex.test(email)) {
@@ -69,7 +72,10 @@ const ContactForm = () => {
       return false;
     }
     if (preferredDate < today) {
-      setStatus({ message: "❌ Date cannot be in the past.", type: "error" });
+      setStatus({
+        message: "❌ Date cannot be in the past.",
+        type: "error",
+      });
       return false;
     }
     return true;
@@ -82,16 +88,20 @@ const ContactForm = () => {
     if (!validateForm()) return;
 
     setLoading(true);
+
     try {
       await axios.post(
         "https://beseki-car-company.onrender.com/api/bookings",
-        { ...formData, carId: selectedCarId }
+        {
+          ...formData,
+          preferredDate: new Date(formData.preferredDate).toISOString(), // FIXED DATE
+          carId: selectedCarId,
+        }
       );
 
-      // Show success modal
+      // Success
       setShowSuccessModal(true);
 
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -103,7 +113,10 @@ const ContactForm = () => {
       setSelectedCarImage("");
     } catch (err) {
       console.error("Booking error:", err.response?.data || err);
-      setStatus({ message: "❌ Failed to save booking. Try again.", type: "error" });
+      setStatus({
+        message: "❌ Failed to save booking. Try again.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -112,11 +125,13 @@ const ContactForm = () => {
   const closeModal = () => setShowSuccessModal(false);
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12 transition-transform transform hover:scale-[1.02] duration-300 relative">
-      {/* Confetti */}
-      {showSuccessModal && <Confetti width={window.innerWidth} height={window.innerHeight} />}
+    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12 relative">
 
-      <h2 className="text-3xl font-bold mb-6 text-center text-blue-700 drop-shadow-sm">
+      {showSuccessModal && (
+        <Confetti width={window.innerWidth} height={window.innerHeight} />
+      )}
+
+      <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
         Book a Test Drive
       </h2>
 
@@ -127,40 +142,43 @@ const ContactForm = () => {
           placeholder="Full Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
           required
         />
+
         <input
           type="email"
           name="email"
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
           required
         />
+
         <input
           type="text"
           name="phone"
           placeholder="Phone Number (10 digits)"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
           required
         />
+
         <input
           type="date"
           name="preferredDate"
           value={formData.preferredDate}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
           required
         />
 
         <select
           value={selectedCarId}
           onChange={handleCarSelect}
-          className="w-full p-4 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg bg-gray-100 focus:ring-2 focus:ring-blue-400"
           required
         >
           <option value="">Select a Car</option>
@@ -172,11 +190,11 @@ const ContactForm = () => {
         </select>
 
         {selectedCarImage && (
-          <div className="mt-3 overflow-hidden rounded-xl shadow-lg transition-transform transform hover:scale-105">
+          <div className="mt-3 p-2 bg-gray-100 rounded-xl shadow-md flex justify-center">
             <img
               src={selectedCarImage}
               alt="Car Preview"
-              className="w-full h-52 object-cover"
+              className="w-40 h-28 object-cover rounded-lg shadow"
             />
           </div>
         )}
@@ -187,13 +205,13 @@ const ContactForm = () => {
           value={formData.message}
           onChange={handleChange}
           rows="4"
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none transition"
+          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full bg-blue-700 text-white py-4 rounded-lg font-semibold hover:bg-blue-800 transition-all duration-300 shadow-md hover:shadow-lg ${
+          className={`w-full bg-blue-700 text-white py-4 rounded-lg font-semibold hover:bg-blue-800 transition ${
             loading ? "opacity-60 cursor-not-allowed" : ""
           }`}
         >
@@ -211,17 +229,18 @@ const ContactForm = () => {
         </p>
       )}
 
-      {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-sm text-center relative shadow-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 text-center shadow-xl">
             <h3 className="text-2xl font-bold text-green-600 mb-4">
               Booking Confirmed!
             </h3>
-            <p className="mb-6">Thank you for booking a test drive. We will contact you soon!</p>
+            <p className="mb-6">
+              Thank you for booking a test drive. We will contact you shortly.
+            </p>
             <button
               onClick={closeModal}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               Close
             </button>
