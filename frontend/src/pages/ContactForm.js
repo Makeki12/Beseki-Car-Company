@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import Confetti from "react-confetti";
 
 const ContactForm = () => {
   const [cars, setCars] = useState([]);
-  const [selectedCarId, setSelectedCarId] = useState("");
-  const [selectedCarImage, setSelectedCarImage] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef();
+
+  const [selectedCar, setSelectedCar] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,7 +18,6 @@ const ContactForm = () => {
 
   const [status, setStatus] = useState({ message: "", type: "" });
   const [loading, setLoading] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Fetch cars
   useEffect(() => {
@@ -34,29 +34,34 @@ const ContactForm = () => {
     fetchCars();
   }, []);
 
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleCarSelect = (e) => {
-    const carId = e.target.value;
-    setSelectedCarId(carId);
-
-    const selectedCar = cars.find((car) => car.id === carId);
-    if (selectedCar && selectedCar.images.length > 0) {
-      setSelectedCarImage(selectedCar.images[0].url);
-    } else {
-      setSelectedCarImage("");
-    }
+  const selectCar = (car) => {
+    setSelectedCar(car);
+    setShowDropdown(false);
   };
 
   const validateForm = () => {
     const { name, email, phone, preferredDate } = formData;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
+
     const today = new Date().toISOString().split("T")[0];
 
-    if (!name || !email || !phone || !preferredDate || !selectedCarId) {
+    if (!name || !email || !phone || !preferredDate || !selectedCar) {
       setStatus({
         message: "❌ Please fill in all required fields.",
         type: "error",
@@ -73,7 +78,7 @@ const ContactForm = () => {
     }
     if (preferredDate < today) {
       setStatus({
-        message: "❌ Date cannot be in the past.",
+        message: "❌ The test drive date cannot be in the past.",
         type: "error",
       });
       return false;
@@ -88,19 +93,20 @@ const ContactForm = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-
     try {
       await axios.post(
         "https://beseki-car-company.onrender.com/api/bookings",
         {
           ...formData,
-          preferredDate: new Date(formData.preferredDate).toISOString(), // FIXED DATE
-          carId: selectedCarId,
+          carId: selectedCar.id,
+          preferredDate: formData.preferredDate,
         }
       );
 
-      // Success
-      setShowSuccessModal(true);
+      setStatus({
+        message: "✅ Booking successful! We will contact you shortly.",
+        type: "success",
+      });
 
       setFormData({
         name: "",
@@ -109,8 +115,7 @@ const ContactForm = () => {
         preferredDate: "",
         message: "",
       });
-      setSelectedCarId("");
-      setSelectedCarImage("");
+      setSelectedCar(null);
     } catch (err) {
       console.error("Booking error:", err.response?.data || err);
       setStatus({
@@ -122,16 +127,9 @@ const ContactForm = () => {
     }
   };
 
-  const closeModal = () => setShowSuccessModal(false);
-
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12 relative">
-
-      {showSuccessModal && (
-        <Confetti width={window.innerWidth} height={window.innerHeight} />
-      )}
-
-      <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
+    <div className="max-w-lg mx-auto bg-white shadow-xl p-6 rounded-2xl border border-gray-200 mt-10 mb-12">
+      <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">
         Book a Test Drive
       </h2>
 
@@ -142,8 +140,7 @@ const ContactForm = () => {
           placeholder="Full Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
-          required
+          className="w-full p-4 border rounded-lg"
         />
 
         <input
@@ -152,8 +149,7 @@ const ContactForm = () => {
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
-          required
+          className="w-full p-4 border rounded-lg"
         />
 
         <input
@@ -162,8 +158,7 @@ const ContactForm = () => {
           placeholder="Phone Number (10 digits)"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
-          required
+          className="w-full p-4 border rounded-lg"
         />
 
         <input
@@ -171,30 +166,63 @@ const ContactForm = () => {
           name="preferredDate"
           value={formData.preferredDate}
           onChange={handleChange}
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
-          required
+          className="w-full p-4 border rounded-lg"
         />
 
-        <select
-          value={selectedCarId}
-          onChange={handleCarSelect}
-          className="w-full p-4 border rounded-lg bg-gray-100 focus:ring-2 focus:ring-blue-400"
-          required
-        >
-          <option value="">Select a Car</option>
-          {cars.map((car) => (
-            <option key={car.id} value={car.id}>
-              {car.name} — Ksh {car.price.toLocaleString()}
-            </option>
-          ))}
-        </select>
+        {/* ---------------- CUSTOM DROPDOWN ---------------- */}
+        <div ref={dropdownRef} className="relative">
+          <div
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="p-4 border w-full rounded-lg bg-gray-100 cursor-pointer flex items-center gap-3"
+          >
+            {selectedCar ? (
+              <>
+                <img
+                  src={selectedCar.images[0]?.url}
+                  alt="thumb"
+                  className="w-12 h-12 object-cover rounded-md"
+                />
+                <span className="font-semibold">
+                  {selectedCar.name} — Ksh {selectedCar.price.toLocaleString()}
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-500">Select a Car</span>
+            )}
+          </div>
 
-        {selectedCarImage && (
-          <div className="mt-3 p-2 bg-gray-100 rounded-xl shadow-md flex justify-center">
+          {showDropdown && (
+            <div className="absolute z-20 bg-white w-full shadow-lg border rounded-lg max-h-64 overflow-y-auto">
+              {cars.map((car) => (
+                <div
+                  key={car.id}
+                  onClick={() => selectCar(car)}
+                  className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer"
+                >
+                  <img
+                    src={car.images[0]?.url}
+                    alt={car.name}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                  <div>
+                    <p className="font-semibold">{car.name}</p>
+                    <p className="text-sm text-gray-600">
+                      Ksh {car.price.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* --------- MAIN PREVIEW --------- */}
+        {selectedCar && (
+          <div className="mt-3">
             <img
-              src={selectedCarImage}
-              alt="Car Preview"
-              className="w-40 h-28 object-cover rounded-lg shadow"
+              src={selectedCar.images[0].url}
+              className="w-full h-52 object-cover rounded-xl shadow-md"
+              alt="preview"
             />
           </div>
         )}
@@ -204,8 +232,8 @@ const ContactForm = () => {
           placeholder="Message (optional)"
           value={formData.message}
           onChange={handleChange}
+          className="w-full p-4 border rounded-lg"
           rows="4"
-          className="w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-400"
         />
 
         <button
@@ -227,25 +255,6 @@ const ContactForm = () => {
         >
           {status.message}
         </p>
-      )}
-
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 text-center shadow-xl">
-            <h3 className="text-2xl font-bold text-green-600 mb-4">
-              Booking Confirmed!
-            </h3>
-            <p className="mb-6">
-              Thank you for booking a test drive. We will contact you shortly.
-            </p>
-            <button
-              onClick={closeModal}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );
