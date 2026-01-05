@@ -4,7 +4,7 @@ import axios from "axios";
 const ContactForm = () => {
   const [cars, setCars] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef();
+  const dropdownRef = useRef(null);
 
   const [selectedCar, setSelectedCar] = useState(null);
 
@@ -19,7 +19,7 @@ const ContactForm = () => {
   const [status, setStatus] = useState({ message: "", type: "" });
   const [loading, setLoading] = useState(false);
 
-  // Fetch cars
+  /* ---------------- FETCH CARS ---------------- */
   useEffect(() => {
     const fetchCars = async () => {
       try {
@@ -34,15 +34,15 @@ const ContactForm = () => {
     fetchCars();
   }, []);
 
-  // Close dropdown when clicking outside
+  /* -------- CLOSE DROPDOWN ON OUTSIDE CLICK -------- */
   useEffect(() => {
-    const handler = (e) => {
+    const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleChange = (e) => {
@@ -54,19 +54,15 @@ const ContactForm = () => {
     setShowDropdown(false);
   };
 
+  /* ---------------- VALIDATION ---------------- */
   const validateForm = () => {
     const { name, email, phone, preferredDate } = formData;
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
-
     const today = new Date().toISOString().split("T")[0];
 
     if (!name || !email || !phone || !preferredDate || !selectedCar) {
-      setStatus({
-        message: "❌ Please fill in all required fields.",
-        type: "error",
-      });
+      setStatus({ message: "❌ Please fill in all required fields.", type: "error" });
       return false;
     }
     if (!emailRegex.test(email)) {
@@ -84,10 +80,10 @@ const ContactForm = () => {
       });
       return false;
     }
-
     return true;
   };
 
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ message: "", type: "" });
@@ -95,7 +91,6 @@ const ContactForm = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-
     try {
       await axios.post(
         "https://beseki-car-company.onrender.com/api/bookings",
@@ -130,127 +125,122 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 mb-16 p-8 bg-white rounded-2xl shadow-xl border border-gray-200">
-      <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
-        Book a Test Drive
-      </h2>
+    <div className="flex justify-center px-4">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mt-12 mb-20">
+        <h2 className="text-3xl font-bold text-center text-blue-700 mb-8">
+          Book a Test Drive
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full p-4 border rounded-xl shadow-sm"
-        />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Inputs */}
+          {["name", "email", "phone"].map((field) => (
+            <input
+              key={field}
+              type={field === "email" ? "email" : "text"}
+              name={field}
+              placeholder={
+                field === "name"
+                  ? "Full Name"
+                  : field === "email"
+                  ? "Email Address"
+                  : "Phone Number (10 digits)"
+              }
+              value={formData[field]}
+              onChange={handleChange}
+              className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
+            />
+          ))}
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full p-4 border rounded-xl shadow-sm"
-        />
+          <input
+            type="date"
+            name="preferredDate"
+            value={formData.preferredDate}
+            onChange={handleChange}
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
+          />
 
-        <input
-          type="text"
-          name="phone"
-          placeholder="Phone Number (10 digits)"
-          value={formData.phone}
-          onChange={handleChange}
-          className="w-full p-4 border rounded-xl shadow-sm"
-        />
+          {/* -------- MODERN CAR SELECT -------- */}
+          <div ref={dropdownRef} className="relative">
+            <div
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-4 p-4 border rounded-xl bg-gray-50 cursor-pointer hover:border-blue-400 transition"
+            >
+              {selectedCar ? (
+                <>
+                  <img
+                    src={selectedCar.images[0]?.url}
+                    className="w-16 h-16 object-cover rounded-xl shadow"
+                    alt="car"
+                  />
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {selectedCar.name}
+                    </p>
+                    <p className="text-blue-600 font-bold">
+                      Ksh {selectedCar.price.toLocaleString()}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <span className="text-gray-500">Select a Car</span>
+              )}
+            </div>
 
-        <input
-          type="date"
-          name="preferredDate"
-          value={formData.preferredDate}
-          onChange={handleChange}
-          className="w-full p-4 border rounded-xl shadow-sm"
-        />
-
-        {/* ------- CAR DROPDOWN -------- */}
-        <div ref={dropdownRef} className="relative">
-          <div
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="p-4 border rounded-xl bg-gray-100 cursor-pointer flex items-center gap-3 shadow-sm"
-          >
-            {selectedCar ? (
-              <>
-                <img
-                  src={selectedCar.images[0]?.url}
-                  className="w-14 h-14 object-cover rounded-lg"
-                  alt="thumb"
-                />
-                <span className="font-semibold">
-                  {selectedCar.name} — Ksh {selectedCar.price.toLocaleString()}
-                </span>
-              </>
-            ) : (
-              <span className="text-gray-500">Select a Car</span>
+            {showDropdown && (
+              <div className="absolute z-30 mt-2 w-full bg-white border rounded-xl shadow-lg max-h-72 overflow-y-auto">
+                {cars.map((car) => (
+                  <div
+                    key={car.id}
+                    onClick={() => selectCar(car)}
+                    className="flex items-center gap-4 p-4 hover:bg-blue-50 cursor-pointer transition"
+                  >
+                    <img
+                      src={car.images[0]?.url}
+                      className="w-16 h-16 object-cover rounded-xl shadow-sm"
+                      alt={car.name}
+                    />
+                    <div>
+                      <p className="font-semibold">{car.name}</p>
+                      <p className="text-sm text-gray-600">
+                        Ksh {car.price.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          {showDropdown && (
-            <div
-              className="absolute left-0 right-0 mt-2 bg-white border rounded-xl shadow-lg max-h-72 overflow-y-auto z-20"
-            >
-              {cars.map((car) => (
-                <div
-                  key={car.id}
-                  onClick={() => selectCar(car)}
-                  className="flex items-center gap-4 p-3 hover:bg-blue-50 cursor-pointer transition"
-                >
-                  <img
-                    src={car.images[0]?.url}
-                    alt="car"
-                    className="w-14 h-14 object-cover rounded-lg"
-                  />
-                  <div>
-                    <p className="font-semibold">{car.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Ksh {car.price.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          <textarea
+            name="message"
+            placeholder="Message (optional)"
+            value={formData.message}
+            onChange={handleChange}
+            rows="4"
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
+          />
 
-        {/* ---- REMOVED BIG PREVIEW HERE ---- */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full bg-blue-700 text-white py-4 rounded-xl font-semibold transition ${
+              loading ? "opacity-60 cursor-not-allowed" : "hover:bg-blue-800"
+            }`}
+          >
+            {loading ? "Submitting..." : "Submit Booking"}
+          </button>
+        </form>
 
-        <textarea
-          name="message"
-          placeholder="Message (optional)"
-          value={formData.message}
-          onChange={handleChange}
-          className="w-full p-4 border rounded-xl shadow-sm"
-          rows="4"
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full bg-blue-700 text-white py-4 rounded-xl font-semibold hover:bg-blue-800 transition ${
-            loading ? "opacity-60 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading ? "Submitting..." : "Submit Booking"}
-        </button>
-      </form>
-
-      {status.message && (
-        <p
-          className={`mt-5 text-center font-semibold ${
-            status.type === "success" ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {status.message}
-        </p>
-      )}
+        {status.message && (
+          <p
+            className={`mt-6 text-center font-semibold ${
+              status.type === "success" ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {status.message}
+          </p>
+        )}
+      </div>
     </div>
   );
 };
