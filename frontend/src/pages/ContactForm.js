@@ -125,58 +125,66 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="flex justify-center px-4">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mt-12 mb-20">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-200 p-8">
         <h2 className="text-3xl font-bold text-center text-blue-700 mb-8">
           Book a Test Drive
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Inputs */}
-          {["name", "email", "phone"].map((field) => (
-            <input
-              key={field}
-              type={field === "email" ? "email" : "text"}
-              name={field}
-              placeholder={
-                field === "name"
-                  ? "Full Name"
-                  : field === "email"
-                  ? "Email Address"
-                  : "Phone Number (10 digits)"
-              }
-              value={formData[field]}
-              onChange={handleChange}
-              className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
-            />
-          ))}
+          {/* INPUTS */}
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
+
+          <input
+            type="text"
+            name="phone"
+            placeholder="Phone Number (10 digits)"
+            value={formData.phone}
+            onChange={handleChange}
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
 
           <input
             type="date"
             name="preferredDate"
+            min={new Date().toISOString().split("T")[0]}
             value={formData.preferredDate}
             onChange={handleChange}
-            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
 
-          {/* -------- MODERN CAR SELECT -------- */}
+          {/* -------- CAR DROPDOWN (SMALL PREVIEW ONLY) -------- */}
           <div ref={dropdownRef} className="relative">
             <div
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-4 p-4 border rounded-xl bg-gray-50 cursor-pointer hover:border-blue-400 transition"
+              className="flex items-center gap-4 p-4 border rounded-xl bg-gray-100 cursor-pointer hover:border-blue-500 transition"
             >
               {selectedCar ? (
                 <>
                   <img
                     src={selectedCar.images[0]?.url}
-                    className="w-16 h-16 object-cover rounded-xl shadow"
                     alt="car"
+                    className="w-14 h-14 object-cover rounded-lg"
                   />
                   <div>
-                    <p className="font-semibold text-gray-800">
-                      {selectedCar.name}
-                    </p>
-                    <p className="text-blue-600 font-bold">
+                    <p className="font-semibold">{selectedCar.name}</p>
+                    <p className="text-sm text-blue-600 font-bold">
                       Ksh {selectedCar.price.toLocaleString()}
                     </p>
                   </div>
@@ -187,7 +195,7 @@ const ContactForm = () => {
             </div>
 
             {showDropdown && (
-              <div className="absolute z-30 mt-2 w-full bg-white border rounded-xl shadow-lg max-h-72 overflow-y-auto">
+              <div className="absolute z-30 mt-2 w-full bg-white border rounded-xl shadow-lg max-h-64 overflow-y-auto">
                 {cars.map((car) => (
                   <div
                     key={car.id}
@@ -196,8 +204,8 @@ const ContactForm = () => {
                   >
                     <img
                       src={car.images[0]?.url}
-                      className="w-16 h-16 object-cover rounded-xl shadow-sm"
                       alt={car.name}
+                      className="w-14 h-14 object-cover rounded-lg"
                     />
                     <div>
                       <p className="font-semibold">{car.name}</p>
@@ -217,7 +225,7 @@ const ContactForm = () => {
             value={formData.message}
             onChange={handleChange}
             rows="4"
-            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none transition"
+            className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
 
           <button
